@@ -1,0 +1,1470 @@
+:root{
+  color-scheme:dark;
+
+  /* The accent set. Everything below `--on-acc-rgb` is derived from it, so a
+     theme only has to redefine these seven values plus its ground. Themes live
+     at the bottom of this file under :root[data-theme="..."]. */
+  --acc:#C8F04A;
+  --acc-rgb:200,240,74;
+  --acc-deep:#A9D42F;
+  --acc-dim:rgba(var(--acc-rgb),.16);
+  --on-acc:#15190B;
+  --on-acc-rgb:21,25,11;
+
+  /* An accent is a *pair*. --acc stays the primary and is what small marks
+     use - a dot, a tick, a tinted pill - because a gradient across 8px is
+     just a muddier flat colour. --acc-grad is for the surfaces big enough to
+     show the travel: buttons, the active tab, the ambient glow behind
+     everything. Both stops are light, so var(--on-acc) reads on either end.
+     A theme therefore redefines --acc-2 alongside --acc; the gradient and the
+     second glow follow from it. */
+  --acc-2:#5FE3A1;
+  --acc-2-rgb:95,227,161;
+  --acc-grad:none;
+  --glow-b:rgba(var(--acc-2-rgb),.10);
+
+  /* The ground the whole app sits on. */
+  --bg-1:#1C1C1E;
+  --bg-2:#0B0B0D;
+  --bg-3:#000000;
+  --ink:#FFFFFF;
+  --ink-2:rgba(235,235,245,.72);
+  --ink-3:rgba(235,235,245,.48);
+  --coral:#E5675C;
+  --amber:#E3C14A;
+  --surface:#1C1C1E;
+  --surface-2:#2C2C2E;
+  --hair:rgba(255,255,255,.12);
+  --hair-lift:rgba(255,255,255,.20);
+  --soft:0 1px 3px rgba(0,0,0,.4);
+  --soft-lift:0 8px 28px rgba(0,0,0,.55);
+  --r-lg:14px;
+  --r-md:10px;
+  --r-sm:8px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;font-family:var(--font);color:var(--ink);background:var(--bg-3);overflow:hidden;}
+::selection{background:rgba(var(--acc-rgb),.28);}
+
+#bg{
+  position:fixed;inset:0;z-index:0;
+  transition:background .34s ease;
+  background:var(--bg-3);
+}
+
+/* matte film — fine grain over the whole app */
+#grain{
+  display:none;
+  position:fixed;inset:0;z-index:9;pointer-events:none;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,textarea{font-family:inherit;border:none;background:none;color:inherit;}
+input:focus,textarea:focus,button:focus{outline:none;}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;}
+
+/* ---------- shell ---------- */
+#shell{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:center;}
+#screen{position:relative;width:100%;max-width:430px;height:100%;display:flex;flex-direction:column;overflow:hidden;}
+/* The phone frame is for the band where the window is wider than a phone but
+   not yet wide enough to be worth laying out differently. Past 1024px the
+   desktop block at the bottom of this file takes over and the frame goes. */
+@media(min-width:880px) and (max-width:1023.98px){
+  #screen{
+    height:min(880px,94vh);
+    border-radius:52px;
+    background:rgba(255,255,255,.028);
+    backdrop-filter:blur(26px) saturate(102%);
+    -webkit-backdrop-filter:blur(26px) saturate(102%);
+    border:1px solid rgba(238,241,230,.075);
+    box-shadow:0 40px 90px rgba(0,0,0,.6);
+    padding:8px;
+  }
+}
+
+/* ---------- header ---------- */
+.head{display:flex;align-items:center;gap:12px;padding:18px 18px 4px;flex-shrink:0;}
+.avatar{border-radius:50%;display:grid;place-items:center;color:#F6F7F0;font-weight:700;flex-shrink:0;}
+.head-id{flex:1;min-width:0;}
+.head-name{
+  display:flex;align-items:center;gap:7px;
+  font-size:16px;font-weight:700;letter-spacing:-.015em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0;}
+.live-dot.saving{background:var(--amber);}
+.live-dot.err{background:var(--coral);}
+.head-role{font-size:13px;color:var(--acc-deep);font-weight:600;margin-top:1px;}
+.icon-btn{
+  width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  background:var(--surface);
+  border:1px solid var(--hair);color:var(--acc);
+  transition:transform .16s ease,background .16s ease;
+}
+.icon-btn:hover{background:var(--surface-2);}
+.icon-btn:active{transform:scale(.93);}
+
+/* ---------- greeting ---------- */
+.greet{padding:12px 18px 14px;flex-shrink:0;font-size:38px;line-height:1.05;letter-spacing:-.038em;font-weight:800;}
+.greet .soft{color:var(--ink-2);font-weight:600;}
+
+/* ---------- chips ---------- */
+.chips{display:flex;gap:10px;padding:0 18px 12px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+  padding:13px 20px;border-radius:999px;
+  font-size:15px;font-weight:600;letter-spacing:-.01em;
+  background:var(--surface);
+  border:1px solid var(--hair);
+  transition:transform .16s ease,background .16s ease;
+}
+.chip:hover{background:var(--surface-2);}
+.chip:active{transform:scale(.96);}
+.chip .n{color:var(--ink-3);font-weight:600;}
+.chip.on{background:var(--acc);background-image:var(--acc-grad);border-color:transparent;color:var(--on-acc);box-shadow:var(--soft);}
+.chip.on .n{color:rgba(var(--on-acc-rgb),.5);}
+
+/* ---------- body ---------- */
+.body{flex:1;min-height:0;overflow-y:auto;padding:12px 18px 100px;scrollbar-width:none;}
+.body::-webkit-scrollbar{display:none;}
+
+/* ---------- rows ---------- */
+.sect-label{font-size:13px;font-weight:600;color:var(--ink-2);letter-spacing:-.01em;margin:4px 2px 10px;}
+.row{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  padding:15px 16px;border-radius:var(--r-md);margin-bottom:10px;
+  background:var(--surface);
+  border:1px solid var(--hair);
+  transition:transform .16s ease,background .16s ease,border-color .16s ease;
+}
+.row:hover{background:var(--surface-2);border-color:var(--hair-lift);}
+.row:active{transform:scale(.985);}
+.row-body{flex:1;min-width:0;}
+.row-title{
+  font-size:15.5px;font-weight:700;letter-spacing:-.018em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:7px;
+}
+.row-title .pin{color:var(--coral);flex-shrink:0;display:flex;}
+.row-meta{font-size:13px;color:var(--ink-2);margin-top:3px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.row-chev{color:var(--ink-3);flex-shrink:0;}
+
+/* ---------- empty ---------- */
+.empty{
+  margin-top:22px;padding:26px 20px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--hair);
+}
+.empty h3{margin:0 0 8px;font-size:22px;letter-spacing:-.028em;font-weight:800;}
+.empty p{margin:0 0 20px;font-size:14.5px;line-height:1.55;color:var(--ink-2);font-weight:500;}
+.acc-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 22px;border-radius:999px;background:var(--acc);background-image:var(--acc-grad);color:var(--on-acc);
+  font-size:15px;font-weight:700;letter-spacing:-.012em;box-shadow:var(--soft);
+  transition:transform .16s ease,background .16s ease;
+}
+/* A gradient cannot darken to a second flat colour, so hover dims the pair. */
+.acc-btn:hover{filter:brightness(.94);}
+.acc-btn:active{transform:scale(.96);}
+
+/* ---------- panels ---------- */
+.panel{
+  padding:15px;border-radius:var(--r-lg);margin-bottom:11px;
+  background:var(--surface);border:1px solid var(--hair);
+}
+.act{display:flex;gap:13px;align-items:flex-start;padding:11px 2px;}
+.act+.act{border-top:1px solid rgba(238,241,230,.075);}
+.act-text{flex:1;min-width:0;font-size:14.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;color:var(--ink-2);}
+.act-text b{font-weight:700;color:var(--ink);}
+.act-time{font-size:12.5px;color:var(--ink-3);margin-top:3px;font-weight:500;}
+
+.you-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.you-name{font-size:21px;font-weight:800;letter-spacing:-.028em;}
+.you-sub{font-size:13.5px;color:var(--ink-2);font-weight:500;margin-top:2px;}
+.field{
+  display:block;width:100%;padding:14px 16px;border-radius:var(--r-sm);
+  background:rgba(255,255,255,.045);border:1px solid var(--hair);
+  font-size:15px;font-weight:500;letter-spacing:-.01em;margin-bottom:12px;color:var(--ink);
+}
+.field::placeholder{color:var(--ink-3);}
+.ghost-btn{
+  width:100%;padding:14px;border-radius:var(--r-sm);
+  background:rgba(229,103,92,.13);color:#F08A7F;border:1px solid rgba(229,103,92,.26);
+  font-size:15px;font-weight:600;letter-spacing:-.012em;
+}
+.ghost-btn:hover{background:rgba(229,103,92,.2);}
+.note-small{font-size:12.5px;color:var(--ink-3);line-height:1.5;margin-top:10px;font-weight:500;}
+
+/* ---------- tab bar ---------- */
+.tabbar{
+  position:absolute;left:12px;right:12px;transform:none;
+  bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:stretch;gap:0;
+  padding:6px 0 5px;
+  border-radius:16px;
+  background:rgba(28,28,30,.86);
+  backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--hair);
+  box-shadow:0 10px 30px rgba(0,0,0,.55);
+  z-index:20;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  height:auto;padding:5px 0 3px;border-radius:0;
+  color:var(--ink-3);font-size:10px;font-weight:500;letter-spacing:0;
+  transition:color .18s ease;
+}
+.tab:hover{color:var(--ink-2);}
+/* iOS names every tab, not just the open one. */
+.tab .label{display:inline;}
+.tab.on{background:none;color:var(--acc);font-weight:600;}
+.tab:active{opacity:.5;}
+.tab.add{background:none;color:var(--acc);}
+.tab.add:hover{background:none;}
+
+/* ---------- sheet ---------- */
+.sheet-scrim{
+  position:absolute;inset:0;z-index:30;background:rgba(4,5,3,.6);
+  opacity:0;pointer-events:none;transition:opacity .28s ease;
+}
+.sheet-scrim.open{opacity:1;pointer-events:auto;}
+/* The card is a full screen, not a partial sheet: it covers the board and the
+   tab bar, and the back button at its top left is the way out. It still slides
+   up, so it reads as a page being pushed rather than one appearing. */
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;top:0;z-index:31;
+  border-radius:0;
+  background:rgba(20,23,15,.88);
+  backdrop-filter:blur(30px) saturate(104%);-webkit-backdrop-filter:blur(30px) saturate(104%);
+  border:1px solid rgba(238,241,230,.1);
+  box-shadow:0 -20px 56px rgba(0,0,0,.6);
+  display:flex;flex-direction:column;
+  transform:translateY(102%);transition:transform .34s cubic-bezier(.32,.72,0,1);
+}
+.sheet.open{transform:translateY(0);}
+/* The grabber went with the partial sheet; the head now carries the top edge
+   of the screen, so it takes the padding the grabber used to occupy. */
+.sheet-head{display:flex;align-items:center;gap:12px;padding:18px 16px 10px;flex-shrink:0;}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:4px 18px 18px;scrollbar-width:none;}
+.sheet-body::-webkit-scrollbar{display:none;}
+#e-title{width:100%;font-size:30px;font-weight:800;letter-spacing:-.034em;line-height:1.1;padding:6px 0 10px;}
+#e-title::placeholder{color:var(--ink-3);}
+/* ---------------------------------------------------------------------------
+   The editor: a transparent textarea over a styled mirror of the same text.
+
+   Everything below `.editor-mirror` and `#e-content` share is load-bearing -
+   font, size, line-height, letter-spacing, padding, wrapping. The two lay the
+   same characters out in the same places, and the caret comes from the
+   textarea while the visible glyphs come from the mirror. Change a metric on
+   one and you have to change it on the other, or the text slides out from
+   under the caret.
+   --------------------------------------------------------------------------- */
+.editor-wrap{position:relative;flex:1 1 auto;min-height:0;display:flex;}
+
+.editor-mirror,
+#e-content{
+  font-family:var(--font);
+  font-size:17px;line-height:1.55;font-weight:400;letter-spacing:-.008em;
+  padding:6px 0 0;
+  white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;
+  border:0;
+}
+
+.editor-mirror{
+  position:absolute;inset:0;z-index:0;
+  overflow:hidden;pointer-events:none;
+  color:rgba(238,241,230,.9);
+}
+
+#e-content{
+  position:relative;z-index:1;
+  width:100%;min-height:0;flex:1 1 auto;resize:none;
+  background:transparent;
+  /* The text is painted by the mirror; only the caret comes from here. */
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+  caret-color:var(--acc);
+}
+/* ...but the placeholder has nothing behind it, so it paints itself. */
+#e-content::placeholder{color:var(--ink-3);-webkit-text-fill-color:var(--ink-3);}
+
+/* The markers stay - their width has to be there or the caret drifts - but
+   they get out of the way.
+
+   Translucent rather than transparent, deliberately. Hiding them outright
+   works and keeps the caret aligned, but it leaves a blank the width of the
+   marker at each end of every styled run, and a run of text floating in gaps
+   reads worse than a marker you can see through.
+
+   The stroke reset matters: an inline marker inside a heading would otherwise
+   inherit .hl-h's text-stroke and paint a heavier outline than the text it
+   sits beside. */
+.editor-mirror .mk{opacity:.3;-webkit-text-stroke:0;}
+
+/* Weight without width. A bolder face has wider glyphs, which would push the
+   mirror out of step with the textarea one character at a time; a stroke
+   thickens the same glyphs in place. Same reason a heading is not enlarged. */
+.editor-mirror .hl-b,
+.editor-mirror .hl-h{-webkit-text-stroke:.42px currentColor;}
+/* Only when app.js has measured that this device's italic is the same width
+   as its upright - see italicIsMetricSafe(). */
+.editor-mirror.italic-ok .hl-i{font-style:italic;}
+.editor-mirror .hl-u{text-decoration:underline;text-underline-offset:3px;}
+.editor-mirror .hl-t.done{text-decoration:line-through;opacity:.55;}
+.edited-by{
+  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);font-weight:500;
+  padding:16px 0 20px;border-top:1px solid rgba(238,241,230,.09);margin-top:18px;
+}
+
+/* ---------- modal ---------- */
+.modal{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:24px;
+  background:rgba(4,5,3,.68);backdrop-filter:blur(8px);}
+.modal-card{
+  width:100%;max-width:360px;padding:30px 26px 24px;border-radius:34px;
+  background:rgba(22,26,17,.92);
+  backdrop-filter:blur(30px) saturate(104%);-webkit-backdrop-filter:blur(30px) saturate(104%);
+  border:1px solid rgba(238,241,230,.11);
+  box-shadow:0 30px 70px rgba(0,0,0,.66);
+}
+.modal-card h1{margin:0 0 8px;font-size:30px;letter-spacing:-.034em;line-height:1.1;font-weight:800;}
+.modal-card h1 .soft{color:var(--ink-2);font-weight:600;}
+.modal-card p{margin:0 0 20px;font-size:14.5px;line-height:1.55;color:var(--ink-2);font-weight:500;}
+.modal-card .field{margin-bottom:16px;}
+.modal-card .acc-btn{width:100%;justify-content:center;}
+
+.hidden{display:none !important;}
+@media(prefers-reduced-motion:reduce){*{transition:none !important;}}
+
+/* =========================================================================
+   Backend additions. Same tokens, same shapes - no new colours, type ramps,
+   or spacing scales. Everything below reuses what :root already declares.
+   ========================================================================= */
+
+/* connection state on the existing status dot */
+.live-dot.offline{background:var(--ink-3);}
+
+/* the board name in the header doubles as the board switcher */
+button.head-role{
+  display:flex;align-items:center;gap:5px;padding:0;
+  font-size:13px;color:var(--acc-deep);font-weight:600;margin-top:1px;
+  max-width:100%;
+}
+button.head-role span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+button.head-role svg{flex-shrink:0;opacity:.75;}
+button.head-role:active{transform:scale(.97);}
+
+/* sign-in providers - shaped like .row, so nothing new enters the language */
+.oauth-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:14px 18px;border-radius:999px;margin-bottom:10px;
+  background:var(--surface-2);border:1px solid var(--hair-lift);
+  font-size:15px;font-weight:600;letter-spacing:-.012em;color:var(--ink);
+  transition:transform .16s ease,background .16s ease;
+}
+.oauth-btn:hover{background:rgba(255,255,255,.12);}
+.oauth-btn:active{transform:scale(.97);}
+.oauth-btn svg{flex-shrink:0;}
+
+/* conflict notice inside the editor sheet */
+.conflict{
+  display:flex;flex-direction:column;gap:12px;
+  padding:16px;border-radius:var(--r-sm);margin:14px 0 4px;
+  background:rgba(227,193,74,.12);border:1px solid rgba(227,193,74,.28);
+}
+.conflict b{font-size:14.5px;font-weight:700;letter-spacing:-.015em;color:var(--amber);}
+.conflict p{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink-2);font-weight:500;}
+.conflict-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.mini-btn{
+  padding:10px 16px;border-radius:999px;font-size:13.5px;font-weight:700;letter-spacing:-.012em;
+  background:var(--surface-2);border:1px solid var(--hair-lift);color:var(--ink);
+}
+.mini-btn.acc{background:var(--acc);background-image:var(--acc-grad);border-color:transparent;color:var(--on-acc);}
+.mini-btn:active{transform:scale(.96);}
+
+/* a trailing action on a .row (restore, copy link) */
+.row-act{
+  flex-shrink:0;padding:9px 14px;border-radius:999px;
+  background:var(--acc-dim);color:var(--acc);
+  font-size:13px;font-weight:700;letter-spacing:-.012em;
+}
+.row-act:active{transform:scale(.95);}
+
+/* a full-width row used for boards and trash, no chevron */
+.row.flat{cursor:pointer;}
+.row.on{border-color:rgba(var(--acc-rgb),.34);background:rgba(var(--acc-rgb),.08);}
+
+/* toast for copied links and one-off confirmations */
+.toast{
+  position:absolute;left:50%;bottom:92px;transform:translateX(-50%) translateY(8px);
+  z-index:40;padding:12px 20px;border-radius:999px;
+  background:rgba(22,25,17,.92);border:1px solid var(--hair-lift);
+  backdrop-filter:blur(24px) saturate(106%);-webkit-backdrop-filter:blur(24px) saturate(106%);
+  box-shadow:var(--soft);
+  font-size:14px;font-weight:600;letter-spacing:-.012em;color:var(--ink);
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;
+  max-width:calc(100% - 44px);text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* =========================================================================
+   The card's action menu. Everything that is not writing - flag, date,
+   delete - sits behind the three dots at the top right of the card, so the
+   card itself is only its title and its text.
+
+   Same glass as every other floating surface here: tokens, .r-md corners, one
+   hairline. The rows are .row's type at .mini-btn's weight; nothing new.
+   ========================================================================= */
+
+/* The writing area fills the card screen.
+
+   `min-height:30vh` was the right floor when the card was a sheet that sized
+   itself to its content. On a full screen it is only a floor, and a short card
+   left a third of the page dead below the text: not part of the note, and not
+   a tap target for the editor either. Long text was worse - the textarea kept
+   its 30vh and scrolled *inside* itself, so the page had two scrollbars and
+   the note used a fifth of the screen.
+
+   So the body is a column and the text grows into whatever is left:
+
+     - .rich  grows past the screen when the card is long, and the body
+       scrolls. It never shrinks (flex-shrink 0), so the reading view is always
+       at least the full page - which makes the whole empty area below short
+       text a tap target for the editor, as it looks like it should be.
+     - #e-content fills exactly and scrolls inside itself, so the editor is the
+       page and there is one scroll context, not two.
+
+   Title and tags never give up height for it. */
+.sheet-body{display:flex;flex-direction:column;}
+.sheet-body #e-title,
+.sheet-body .card-tags,
+.sheet-body .conflict{flex-shrink:0;}
+.sheet-body .rich{flex:1 0 auto;}
+.sheet-body .editor-wrap{flex:1 1 auto;}
+
+/* The card's footer: the formatting bar and who touched the card last, held at
+   the bottom of the screen rather than at the end of the text. Both are about
+   the card as a whole, so scrolling them away with the writing was wrong - and
+   on a long card the formatting bar used to leave the screen entirely while
+   you were still typing.
+
+   The sheet is already a flex column, so this only has to refuse to shrink.
+   The two rules below undo the separators each element carried when it sat
+   inline: one hairline on the footer replaces both. */
+.sheet-foot{
+  flex-shrink:0;padding:0 18px 14px;
+  border-top:1px solid var(--hair);
+}
+.sheet-foot .edited-by{border-top:0;margin:0;padding:12px 0 0;}
+.sheet-foot .edited-by:empty{display:none;}
+
+/* The back button is the only thing to its left now, so the dots hold the
+   right edge themselves. */
+.menu-wrap{position:relative;flex-shrink:0;margin-left:auto;}
+.menu{
+  position:absolute;top:52px;right:0;z-index:32;min-width:232px;
+  padding:7px;border-radius:var(--r-md);
+  /* Opaque like .modal-card and .toast, not thin like a panel: this one sits
+     over the card's own title, so the text behind must not read through it. */
+  background:rgba(23,27,18,.94);
+  backdrop-filter:blur(26px) saturate(106%);-webkit-backdrop-filter:blur(26px) saturate(106%);
+  border:1px solid var(--hair-lift);
+  box-shadow:var(--soft-lift);
+}
+.menu-item{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:12px 13px;border-radius:var(--r-sm);
+  font-size:14.5px;font-weight:600;letter-spacing:-.012em;color:var(--ink);
+  transition:background .14s ease;
+}
+.menu-item:hover{background:var(--surface-2);}
+.menu-item:active{transform:scale(.98);}
+.menu-item svg{flex-shrink:0;color:var(--ink-3);}
+.menu-item.on svg{color:var(--acc);}
+.menu-item.danger{color:var(--coral);}
+.menu-item.danger svg{color:var(--coral);}
+.menu-item.danger:hover{background:rgba(229,103,92,.14);}
+
+/* What the menu has set, shown under the title so the card still says what it
+   is without the menu being open. Read-only - .due-pill without the button. */
+.card-tags{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px;}
+.card-tags:empty{display:none;}
+.card-tags .due-pill{margin:0;pointer-events:none;}
+.card-tags .due-pill.flagged{
+  background:rgba(229,103,92,.16);border-color:rgba(229,103,92,.3);color:#F08A7F;
+}
+
+/* full-screen loading state before the first board arrives */
+.boot{
+  position:absolute;inset:0;z-index:50;display:grid;place-items:center;
+  color:var(--ink-3);font-size:14px;font-weight:600;letter-spacing:-.012em;
+}
+
+/* =========================================================================
+   Themes.
+
+   A theme swaps the accent set and the ground it sits on. Nothing else moves:
+   same layout, same type ramp, same spacing, same components. Everything that
+   reads as "accent" elsewhere in this file is expressed as var(--acc*) or
+   rgba(var(--acc-rgb), a), so these blocks are the whole of it.
+
+   Keep the ids in step with Themes::ALL in app/Themes.php.
+   ========================================================================= */
+
+:root[data-theme="amber"]{
+  --acc:#F0C24A;
+  --acc-rgb:240,194,74;
+  --acc-deep:#D4A32F;
+  --acc-2:#F0894A;
+  --acc-2-rgb:240,137,74;
+  --on-acc:#191408;
+  --on-acc-rgb:25,20,8;
+  --bg-1:#1C1C1E; --bg-2:#0B0B0D; --bg-3:#000000;
+}
+
+:root[data-theme="teal"]{
+  --acc:#4AE8CE;
+  --acc-rgb:74,232,206;
+  --acc-deep:#2FCDB2;
+  --acc-2:#4AA8E8;
+  --acc-2-rgb:74,168,232;
+  --on-acc:#071A17;
+  --on-acc-rgb:7,26,23;
+  --bg-1:#1C1C1E; --bg-2:#0B0B0D; --bg-3:#000000;
+}
+
+:root[data-theme="sky"]{
+  --acc:#7FC0FF;
+  --acc-rgb:127,192,255;
+  --acc-deep:#4FA3F0;
+  --acc-2:#A88FFF;
+  --acc-2-rgb:168,143,255;
+  --on-acc:#08131F;
+  --on-acc-rgb:8,19,31;
+  --bg-1:#1C1C1E; --bg-2:#0B0B0D; --bg-3:#000000;
+}
+
+:root[data-theme="violet"]{
+  --acc:#C0A2FF;
+  --acc-rgb:192,162,255;
+  --acc-deep:#A281F0;
+  --acc-2:#FF9BD0;
+  --acc-2-rgb:255,155,208;
+  --on-acc:#140D22;
+  --on-acc-rgb:20,13,34;
+  --bg-1:#1C1C1E; --bg-2:#0B0B0D; --bg-3:#000000;
+}
+
+:root[data-theme="rose"]{
+  --acc:#FF9BB0;
+  --acc-rgb:255,155,176;
+  --acc-deep:#F0748F;
+  --acc-2:#FFC46B;
+  --acc-2-rgb:255,196,107;
+  --on-acc:#1F0C12;
+  --on-acc-rgb:31,12,18;
+  --bg-1:#1C1C1E; --bg-2:#0B0B0D; --bg-3:#000000;
+}
+
+/* =========================================================================
+   Profile: photos, the profile tab, and the theme picker.
+   ========================================================================= */
+
+/* A photo simply fills the disc the initials used to occupy, so avatars keep
+   their existing size, border and stacking behaviour everywhere. */
+.avatar{overflow:hidden;}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* Large avatar with its own controls, used in the profile editors. */
+.photo-edit{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+.photo-edit .avatar{box-shadow:var(--soft);}
+.photo-actions{display:flex;flex-direction:column;gap:8px;min-width:0;}
+.photo-actions .mini-btn{width:100%;text-align:center;}
+
+/* The file input itself is never shown - the label is the button. */
+.file-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:999px;cursor:pointer;
+  background:var(--acc);background-image:var(--acc-grad);color:var(--on-acc);
+  font-size:13.5px;font-weight:700;letter-spacing:-.012em;
+}
+.file-btn:active{transform:scale(.96);}
+.file-btn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+
+.field-label{
+  display:block;font-size:12.5px;font-weight:700;letter-spacing:-.005em;
+  color:var(--ink-3);text-transform:uppercase;margin:2px 2px 8px;
+}
+.field-note{font-size:12.5px;color:var(--ink-3);line-height:1.5;margin:-4px 2px 14px;font-weight:500;}
+
+/* Read-only master facts: email, provider. */
+.fact{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 2px;font-size:14px;font-weight:500;color:var(--ink-2);
+}
+.fact+.fact{border-top:1px solid rgba(238,241,230,.075);}
+.fact b{font-weight:600;color:var(--ink);word-break:break-all;text-align:right;}
+
+.handle{font-size:13.5px;color:var(--acc-deep);font-weight:600;margin-top:2px;}
+
+/* Theme picker: one disc per theme, painted in that theme's own accent. */
+.swatches{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 4px;}
+.swatch{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;position:relative;
+  border:2px solid var(--hair);
+  display:grid;place-items:center;
+  transition:transform .16s ease,border-color .16s ease;
+}
+.swatch:hover{border-color:var(--hair-lift);}
+.swatch:active{transform:scale(.93);}
+.swatch.on{border-color:var(--ink);}
+.swatch .tick{opacity:0;color:#fff;mix-blend-mode:difference;}
+.swatch.on .tick{opacity:1;}
+.swatch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.swatch-row .sect-label{margin:0;}
+.swatch-name{font-size:13px;font-weight:600;color:var(--ink-2);}
+
+/* =========================================================================
+   The board: every card the same card, in one column or two.
+
+   Two columns is CSS columns, not a measured masonry - the browser balances
+   the pair, which is what makes it look packed, and the cost is that cards
+   read down one column and then the other rather than left to right. That is
+   worth not shipping a layout engine to a shared-hosting app.
+
+   `break-inside:avoid` is what keeps a card from being sliced in half across
+   the column boundary; without it the whole thing falls apart.
+   ========================================================================= */
+
+.cards.list{display:flex;flex-direction:column;gap:9px;}
+.cards.grid{column-count:2;column-gap:9px;}
+.cards.grid .note-card{break-inside:avoid;-webkit-column-break-inside:avoid;margin-bottom:9px;}
+
+.note-card{
+  position:relative;display:block;width:100%;text-align:left;
+  padding:13px 14px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--hair);
+  cursor:pointer;overflow:hidden;
+  transition:transform .16s ease,background .16s ease,border-color .16s ease;
+}
+.note-card:hover{background:var(--surface-2);border-color:var(--hair-lift);}
+.note-card:active{transform:scale(.985);}
+.note-card.flagged{border-width:2px;border-color:rgba(229,103,92,.72);}
+
+.note-title{
+  margin:0 0 6px;font-size:17px;font-weight:750;letter-spacing:-.02em;line-height:1.25;
+  color:var(--ink);word-break:break-word;padding-right:18px;
+}
+/* That 8px separates the title from the body. With nothing under it - a card
+   that is only a title - it is an orphan margin, and the card sits 8px
+   bottom-heavy. */
+.note-title:last-child{margin-bottom:0;}
+.note-flag{position:absolute;top:15px;right:15px;color:var(--coral);display:flex;}
+
+/* The body is the same rendered text the card screen shows, at list size and
+   clipped to a card's worth. The boxes are inert: ticking one belongs inside
+   the card, where the save and its conflict handling are. */
+.note-body{
+  font-size:14.5px;line-height:1.5;font-weight:500;color:var(--ink-2);
+  max-height:260px;overflow:hidden;
+}
+.note-body p{margin:0 0 8px;}
+.note-body p:last-child{margin-bottom:0;}
+.note-body strong{font-weight:700;color:var(--ink);}
+.note-body .task{margin:0 0 6px;gap:8px;}
+/* Same centring as .task .box, against this card's smaller line box (1.5em). */
+.note-body .task .box{
+  width:17px;height:17px;border-radius:5px;pointer-events:none;
+  margin-top:calc((1.5em - 17px) / 2);
+}
+.note-body .task .box svg{width:12px;height:12px;}
+.note-body .empty-note,.note-body.empty-note{color:var(--ink-3);}
+/* Set by renderNotes() on the bodies that actually overflow, so a card that
+   fits keeps its last line at full strength. */
+.note-body.clipped{
+  -webkit-mask-image:linear-gradient(to bottom,#000 76%,transparent 99%);
+  mask-image:linear-gradient(to bottom,#000 76%,transparent 99%);
+}
+
+.note-due{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;
+  padding:5px 11px;border-radius:999px;
+  background:var(--acc-dim);color:var(--acc);
+  font-size:12px;font-weight:700;letter-spacing:-.01em;
+}
+
+/* =========================================================================
+   The profile tab: an identity hero, then one settings list.
+
+   The hero is the only place in the app that states who you are at size, so
+   it gets the accent halo the focus card gets - same trick, a blurred accent
+   disc behind the avatar - and the three numbers that describe your corner of
+   the board. Everything under it is a list, not a stack of cards: one panel,
+   hairline between rows, a glyph to aim at on each line.
+   ========================================================================= */
+
+.hero{
+  position:relative;overflow:hidden;
+  padding:26px 18px 18px;border-radius:var(--r-lg);margin-bottom:12px;
+  background:var(--surface);border:1px solid var(--hair);
+  text-align:center;
+}
+/* The same soft accent bloom the focus card sits under. */
+.hero-halo{
+  position:absolute;top:-70px;left:50%;transform:translateX(-50%);
+  width:230px;height:170px;pointer-events:none;
+  /* Both stops, offset, so the bloom behind the avatar carries the theme's
+     pair rather than half of it. */
+  background:radial-gradient(circle at 50% 60%, rgba(var(--acc-rgb),.16), transparent 68%);
+  filter:blur(22px);
+}
+.hero-face{position:relative;display:inline-grid;place-items:center;margin-bottom:14px;}
+.hero-face .avatar{border:2px solid rgba(var(--acc-rgb),.55);box-shadow:var(--soft);}
+.hero-name{
+  position:relative;font-size:27px;font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  word-break:break-word;
+}
+.hero-handle{position:relative;font-size:14px;font-weight:650;color:var(--acc-deep);margin-top:3px;}
+.hero-sub{position:relative;font-size:13px;font-weight:500;color:var(--ink-3);margin-top:6px;}
+
+.stats{
+  position:relative;display:flex;margin-top:20px;padding-top:16px;
+  border-top:1px solid var(--hair);
+}
+.stat{flex:1;min-width:0;}
+.stat+.stat{border-left:1px solid var(--hair);}
+.stat b{display:block;font-size:20px;font-weight:800;letter-spacing:-.025em;color:var(--ink);}
+.stat span{display:block;font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--ink-3);margin-top:2px;}
+
+/* The settings list. One panel, rows divided by hairlines; the row itself is
+   the hit target, not the chevron. */
+.panel.settings{padding:2px 18px;}
+.fold+.fold{border-top:1px solid var(--hair);}
+.disclosure{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px 0;
+}
+.disclosure-icon{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;
+  background:var(--surface-2);border:1px solid var(--hair);color:var(--acc);
+}
+.fold-label{font-size:14.5px;font-weight:650;letter-spacing:-.012em;color:var(--ink);flex-shrink:0;}
+.fold-value{
+  margin-left:auto;min-width:0;font-size:13px;font-weight:600;color:var(--ink-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.disclosure-chev{color:var(--ink-3);flex-shrink:0;display:flex;transition:transform .22s ease;}
+.disclosure[aria-expanded="true"] .disclosure-chev{transform:rotate(180deg);}
+.disclosure[aria-expanded="true"] .disclosure-icon{background:var(--acc-dim);border-color:transparent;}
+.disclosure-body{padding-bottom:18px;}
+.setting+.setting{margin-top:16px;padding-top:16px;border-top:1px solid var(--hair);}
+
+/* Sign out is not one of the dangerous ones and should not look like them. */
+.sign-out{
+  width:100%;padding:14px;border-radius:var(--r-sm);
+  font-size:14.5px;font-weight:600;letter-spacing:-.012em;color:var(--ink-3);
+  transition:color .16s ease;
+}
+.sign-out:hover{color:var(--ink);}
+
+/* "Same as my profile" toggle for a per-board override. */
+.inherit{
+  display:flex;align-items:center;gap:10px;padding:12px 2px 4px;
+  font-size:13.5px;color:var(--ink-2);font-weight:500;
+}
+.inherit button{
+  margin-left:auto;padding:8px 14px;border-radius:999px;
+  background:var(--surface-2);border:1px solid var(--hair);
+  font-size:13px;font-weight:700;color:var(--ink-2);
+}
+.inherit button.on{background:var(--acc);background-image:var(--acc-grad);border-color:transparent;color:var(--on-acc);}
+
+/* The profile modal can get tall on small screens. */
+.modal-card.tall{max-height:min(88vh,720px);overflow-y:auto;scrollbar-width:none;}
+.modal-card.tall::-webkit-scrollbar{display:none;}
+
+/* =========================================================================
+   Rich text in the card sheet. The sheet reads by default and edits on tap,
+   so .rich has to match #e-content's type exactly - otherwise the text jumps
+   as you switch. Same tokens throughout; the only accent use is the ticked
+   checkbox, which goes through var(--acc)/var(--on-acc) like everything else.
+
+   The formatting toolbar that used to sit above this has been removed. The
+   markers are still rendered and checkboxes are still tickable - there is
+   simply nothing writing markers any more. See decision 8 in CLAUDE.md.
+   ========================================================================= */
+
+.fmt-bar{
+  display:flex;align-items:center;gap:6px;
+  padding:10px 0 0;
+}
+.fmt{
+  width:34px;height:34px;border-radius:var(--r-sm);
+  display:grid;place-items:center;flex-shrink:0;
+  background:var(--surface);border:1px solid var(--hair);
+  color:var(--ink-2);font-size:15px;line-height:1;
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.fmt:hover{background:var(--surface-2);color:var(--ink);}
+.fmt:active{opacity:.6;}
+.fmt b{font-weight:800;}
+.fmt i{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:600;}
+.fmt u{text-underline-offset:2px;}
+
+/* Lit while the caret is inside the style the button applies, so a toggle
+   says which way it is about to go. Accent tint rather than a solid fill:
+   several can be on at once, and six filled blocks would shout louder than
+   the text being written. */
+.fmt.on{background:var(--acc-dim);border-color:transparent;color:var(--acc);}
+:root[data-mode="light"] .fmt.on{color:var(--acc-ink);}
+
+/* Nothing ticked, so "clear ticked" has nothing to do. Still tappable - it
+   says so with a toast - but it should not look like a live action. */
+.fmt.dim{opacity:.4;}
+
+/* Done is not a style and must not read as one: it leaves the editor rather
+   than changing the text, so it sits apart at the far edge - where Done lives
+   on iOS - and is the only button on this bar carrying the accent.
+   `margin-left:auto` holds it there and absorbs the leftover width, so the
+   styles keep their natural spacing however many of them there are.
+
+   It is a tick and not the word "Done" on a phone, and that is measured, not
+   taste: at 375px the seven style buttons end at x=315 inside a bar that ends
+   at 356, so there are 36px left. The word needs 63 and was being clipped off
+   the screen. A 34px button fits with 2px to spare and nothing else has to
+   move - and the phone layout is signed off, so nothing else *may* move.
+   The word comes back past 1024px, where the card is a dialog with room for
+   it; see the desktop block at the end of this file. */
+.fmt-done{
+  margin-left:auto;gap:7px;
+  background:var(--acc-dim);border-color:transparent;color:var(--acc);
+  font-size:13.5px;font-weight:700;letter-spacing:-.012em;
+}
+.fmt-done:hover{background:var(--acc-dim);color:var(--acc);filter:brightness(1.12);}
+:root[data-mode="light"] .fmt-done{color:var(--acc-ink);}
+/* The tick alone on a phone. `display:grid` on .fmt centres whichever of the
+   two is showing. */
+.fmt-done-label{display:none;}
+
+/* Marks the two joins in the bar: what styles the words, what styles the
+   line, and the one thing that is an action rather than a style. */
+.fmt-sep{
+  width:1px;height:18px;flex-shrink:0;margin:0 2px;
+  background:var(--hair);
+}
+
+/* The reading view. Type ramp copied from #e-content on purpose. */
+.rich{
+  min-height:30vh;padding:6px 0 0;
+  font-size:17px;line-height:1.55;font-weight:400;letter-spacing:-.008em;
+  color:rgba(238,241,230,.9);cursor:text;
+}
+/* A card's heading. One level, so it only has to be bigger than the body and
+   clearly not a paragraph - it is a title line inside a short note, not the
+   top of a document. Same ramp as .note-title, which is the other place this
+   app calls something a heading. */
+.rich-h{
+  margin:2px 0 10px;font-size:19px;font-weight:750;
+  letter-spacing:-.02em;line-height:1.3;color:var(--ink);
+}
+.rich-h:first-child{margin-top:0;}
+/* In a board preview the card already has a title above it, so a heading at
+   near-title size reads as a second one. Smaller and a shade lighter here: a
+   sub-heading inside the body, not a rival to the card's own name. */
+.note-body .rich-h{font-size:15px;font-weight:700;margin:0 0 5px;}
+
+.rich p{margin:0 0 12px;}
+.rich p:last-child{margin-bottom:0;}
+.rich strong{font-weight:750;color:var(--ink);}
+.rich em{font-style:italic;}
+.rich u{text-underline-offset:3px;text-decoration-thickness:1.5px;}
+.rich-empty{color:var(--ink-3);}
+
+/* A bullet row. Same shape as a checklist row - the dot sits where the box
+   would - so a list of each reads as the same kind of thing. The dot is
+   drawn rather than typed, so it takes the theme and cannot be selected
+   or copied out with the text.
+
+   Scoped to the two containers `renderRich()` writes into, and not left as a
+   bare `.bullet`: the desktop rail's boards list already used that class for
+   its own dot (`<i class="bullet">` in renderSideBoards), so a global rule
+   here handed those dots `display:flex` and a 9px bottom margin and knocked
+   them out of line with their labels. */
+.rich .bullet,
+.note-body .bullet{display:flex;align-items:flex-start;gap:10px;margin:0 0 9px;}
+.rich .bullet .dot,
+.note-body .bullet .dot{
+  width:5px;height:5px;border-radius:50%;flex-shrink:0;
+  background:var(--ink-3);
+  /* Centred on the first line of its text, the same way .task .box is. */
+  margin-top:calc((1.55em - 5px) / 2);
+}
+.note-body .bullet{margin:0 0 6px;gap:8px;}
+.note-body .bullet .dot{width:4px;height:4px;margin-top:calc((1.5em - 4px) / 2);}
+
+/* Checklist rows. The box is the only hit target that does not open the
+   editor - see the stopPropagation in renderRead(). */
+.task{display:flex;align-items:flex-start;gap:10px;margin:0 0 9px;}
+/* Centre the box on the *first line* of its text: half the difference between
+   the line box (1.62em here) and the box itself. A flat 1px left it sitting
+   high, which is what made a ticked line look off its label.
+   `font-size:inherit` is load-bearing - a button does not inherit it, so
+   without it the em below resolves against the browser's default and the
+   sum comes out wrong. */
+.task .box{
+  width:21px;height:21px;flex-shrink:0;font-size:inherit;
+  /* A button's UA padding is 1px 6px, and the reset at the top of this file
+     never zeroed it. Every other button here sets its own padding, so this was
+     the one place it leaked: it squeezed the content box to a few px and the
+     tick overflowed to the right of centre. */
+  padding:0;
+  margin-top:calc((1.62em - 21px) / 2);
+  border-radius:7px;border:1.5px solid var(--hair-lift);
+  background:var(--surface);color:var(--on-acc);
+  display:grid;place-items:center;cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
+}
+.task .box:hover{border-color:var(--ink-3);}
+.task .box:active{transform:scale(.9);}
+.task.done .box{background:var(--acc);border-color:transparent;}
+.task.done span{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--ink-3);}
+
+/* =========================================================================
+   The board calendar. A month grid, a day list, and a due-date pill on the
+   card sheet. Same tokens as everything else - the accent appears only on
+   today, the selected day, and the event dot, all via var(--acc*).
+   ========================================================================= */
+
+.cal-panel{padding-bottom:14px;}
+
+/* Alone in its panel, so it sits centred rather than carrying .note-small's
+   margin-top, which is there for when it follows something. */
+.note-small.day-empty{margin:0;}
+
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.cal-title{font-size:17px;font-weight:750;letter-spacing:-.02em;color:var(--ink);}
+.cal-nav{
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background:var(--surface);border:1px solid var(--hair);color:var(--ink-2);
+  transition:background .16s ease,color .16s ease;
+}
+.cal-nav:hover{background:var(--surface-2);color:var(--ink);}
+.cal-nav:active{transform:scale(.92);}
+
+.cal-dow{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+  margin-bottom:4px;
+}
+.cal-dow span{
+  text-align:center;font-size:11px;font-weight:700;letter-spacing:.02em;
+  color:var(--ink-3);text-transform:uppercase;
+}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-cell{
+  position:relative;aspect-ratio:1;border-radius:var(--r-sm);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:transparent;border:1px solid transparent;
+  color:var(--ink-2);font-size:14px;font-weight:600;
+  transition:background .14s ease,color .14s ease,border-color .14s ease;
+}
+.cal-cell:hover{background:var(--surface);}
+.cal-cell.out{color:var(--ink-3);opacity:.5;}
+.cal-cell.today{border-color:var(--hair-lift);color:var(--ink);}
+.cal-cell.sel{background:var(--acc);background-image:var(--acc-grad);color:var(--on-acc);border-color:transparent;font-weight:750;}
+.cal-cell .n{line-height:1;}
+
+.cal-cell .dots{display:flex;align-items:center;gap:3px;height:5px;}
+.dot{width:4px;height:4px;border-radius:50%;display:block;}
+.dot.ev{background:var(--acc);}
+.dot.cd{background:var(--ink-3);}
+.cal-cell.sel .dot.ev{background:var(--on-acc);}
+.cal-cell.sel .dot.cd{background:rgba(var(--on-acc-rgb),.5);}
+
+/* The time column on a day row. Fixed width so titles line up down the list. */
+.cal-when{
+  flex-shrink:0;width:62px;
+  font-size:12px;font-weight:700;letter-spacing:-.01em;color:var(--acc);
+  display:flex;align-items:center;
+}
+.cal-when.all{color:var(--ink-2);font-weight:600;}
+.cal-when.card{color:var(--ink-3);width:auto;padding-right:8px;}
+
+/* Due date on the card sheet, sitting under the title like a quiet chip. */
+.due-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  margin:2px 0 6px;padding:7px 13px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--hair);
+  font-size:13px;font-weight:650;letter-spacing:-.01em;color:var(--ink-3);
+  transition:background .16s ease,color .16s ease,border-color .16s ease;
+}
+.due-pill:hover{background:var(--surface-2);color:var(--ink-2);}
+.due-pill:active{transform:scale(.96);}
+.due-pill.on{background:var(--acc-dim);border-color:transparent;color:var(--acc);}
+
+/* An event's Activity row has no person to put an avatar under - a small
+   calendar glyph sits in the same 38px slot an avatar would occupy. */
+.act-icon{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-2);
+}
+
+/* =========================================================================
+   Card search. Same pill language as .chip, sitting directly above the
+   filter row it composes with. Tokens only - no new colours.
+   ========================================================================= */
+
+/* 17px is the card's own text inset, so what you type lines up with the card
+   titles under it. The magnifier sits at the trailing edge for the same
+   reason: leading it pushed the text 26px further in than everything else. */
+.search{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  /* A search field is one of the few things that is conventionally a capsule -
+     Spotlight, Safari, the App Store all round it fully - so it keeps the pill
+     the rest of the UI gave up. The horizontal inset grows with the curve so
+     the text does not crowd it. */
+  margin:8px 18px 10px;padding:0 16px;height:40px;border-radius:999px;
+  background:var(--surface);
+  border:1px solid var(--hair);
+  transition:border-color .16s ease,background .16s ease;
+}
+.search:focus-within{border-color:var(--hair-lift);background:var(--surface-2);}
+.search-ico{color:var(--ink-3);flex-shrink:0;}
+.search:focus-within .search-ico{color:var(--acc);}
+
+#q{
+  flex:1;min-width:0;background:none;border:0;outline:none;
+  font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:-.01em;
+  color:var(--ink);
+}
+#q::placeholder{color:var(--ink-3);font-weight:500;}
+
+.search-clear{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--surface-2);color:var(--ink-2);
+  transition:background .16s ease,color .16s ease;
+}
+.search-clear:hover{background:var(--hair-lift);color:var(--ink);}
+.search-clear:active{transform:scale(.92);}
+
+/* Deleting a board is the one irreversible action in the app, so it reads
+   louder than the recoverable ones it sits next to: solid coral rather than
+   the tinted .ghost-btn, and locked until the name is typed. */
+.ghost-btn.danger{
+  background:var(--coral);color:#fff;border-color:transparent;font-weight:700;
+}
+.ghost-btn.danger:hover{background:#F08A7F;}
+.ghost-btn:disabled{opacity:.38;pointer-events:none;}
+
+/* =========================================================================
+   Light mode.
+
+   Unlike a theme, this belongs to the person looking, not to the board. The
+   accent is the board's and is shared; the ground it sits on is not, and the
+   choice never leaves the device it was made on - so there is nothing here
+   for the server or the delta feed to carry.
+
+   It is expressed the way a theme is: one attribute on <html>, data-mode.
+   Dark is the *absence* of that attribute rather than data-mode="dark", so
+   nothing below can move the signed-off dark UI by a pixel.
+
+   This block sits after the theme blocks deliberately. It overrides the same
+   ground tokens they set, and :root[data-mode] and :root[data-theme] carry
+   identical specificity - so order is what decides it.
+
+   Two things tokens alone cannot do, and which are done by hand below:
+
+     - every accent is a *light* colour, so accent-as-text needs a darker
+       value of it. That is --acc-ink, one per theme. --acc-deep is not
+       darkened here: every light-mode surface that would have used it as
+       text (.head-role, .handle, .hero-handle) is restated below to use
+       --acc-ink instead, so --acc-deep is only ever read on the dark
+       ground it was mixed for.
+     - a handful of prototype rules carry literal dark values rather than
+       tokens. Those rules are restated, and only those.
+   ========================================================================= */
+
+:root[data-mode="light"]{
+  color-scheme:light;
+
+  --bg-1:#F2F2F7; --bg-2:#F2F2F7; --bg-3:#F2F2F7;
+  --ink:#000000;
+  --ink-2:rgba(60,60,67,.68);
+  --ink-3:rgba(60,60,67,.45);
+  --coral:#C6483D;
+  --amber:#8A6B0E;
+  /* Paint, not glass. Content surfaces are opaque in both modes now; the
+     blur is kept for chrome that genuinely floats over content. */
+  --surface:#FFFFFF;
+  --surface-2:#EFEFF4;
+  --hair:rgba(60,60,67,.18);
+  --hair-lift:rgba(60,60,67,.29);
+  --soft:0 1px 3px rgba(0,0,0,.08);
+  --soft-lift:0 8px 28px rgba(0,0,0,.12);
+  /* The second stop, same as in dark - it is what makes the ambient wash read
+     as a pair rather than one colour fading out. */
+  --glow-b:rgba(var(--acc-2-rgb),.26);
+
+  /* An accent tint has to work harder on a light ground than on a dark one. */
+  --acc-dim:rgba(var(--acc-rgb),.3);
+
+  --acc-ink:#5C7A12;
+}
+
+:root[data-mode="light"][data-theme="amber"] {--acc-ink:#7A5B0C;}
+:root[data-mode="light"][data-theme="teal"]  {--acc-ink:#0E6B5C;}
+:root[data-mode="light"][data-theme="sky"]   {--acc-ink:#14588F;}
+:root[data-mode="light"][data-theme="violet"]{--acc-ink:#5B3FA8;}
+:root[data-mode="light"][data-theme="rose"]  {--acc-ink:#A33552;}
+
+/* Accent as ink: everywhere the accent is text or a small mark sitting on the
+   ground, rather than a fill with var(--on-acc) on top of it. */
+:root[data-mode="light"] .icon-btn,
+:root[data-mode="light"] .tab.add,
+:root[data-mode="light"] .tab.on,
+:root[data-mode="light"] .row-act,
+:root[data-mode="light"] .note-due,
+:root[data-mode="light"] .head-role,
+:root[data-mode="light"] button.head-role,
+:root[data-mode="light"] .handle,
+:root[data-mode="light"] .hero-handle,
+:root[data-mode="light"] .disclosure-icon,
+:root[data-mode="light"] .search:focus-within .search-ico{color:var(--acc-ink);}
+:root[data-mode="light"] :focus-visible{outline-color:var(--acc-ink);}
+
+/* The status dot keeps its own saving/error/offline colours. */
+:root[data-mode="light"] .live-dot:not(.saving):not(.err):not(.offline){background:var(--acc-ink);}
+:root[data-mode="light"] .cal-cell:not(.sel) .dot.ev{background:var(--acc-ink);}
+
+/* The frost, restated for a light ground.
+
+   Two things carry it in dark mode and neither survives a naive flip. The
+   surface is nearly transparent, so what you read as "glass" is the ground
+   *through* it - and the ground has an accent glow in it worth blurring. On a
+   light ground the same glow at the same alpha washes out to nothing, so it is
+   opened up here, and the blur is given a much higher saturate() to pull the
+   colour back out of it. That last part is what separates frosted glass from
+   flat translucent white. */
+:root[data-mode="light"] #bg{
+  background:var(--bg-3);
+}
+
+/* The literal dark values from the prototype, restated for a light ground.
+   Same shapes and roughly the same weights - only the ink and the ground
+   change sides. */
+@media(min-width:880px) and (max-width:1023.98px){
+  :root[data-mode="light"] #screen{
+    background:rgba(255,255,255,.3);
+    border-color:rgba(255,255,255,.55);
+    backdrop-filter:blur(30px) saturate(150%);
+    -webkit-backdrop-filter:blur(30px) saturate(150%);
+    box-shadow:0 40px 90px rgba(22,26,16,.18);
+  }
+}
+:root[data-mode="light"] #grain{opacity:.045;}
+
+:root[data-mode="light"] .act+.act,
+:root[data-mode="light"] .fact+.fact,
+:root[data-mode="light"] .edited-by{border-top-color:rgba(22,26,16,.09);}
+
+:root[data-mode="light"] .field{background:#EFEFF4;}
+:root[data-mode="light"] .oauth-btn:hover{background:rgba(22,26,16,.07);}
+:root[data-mode="light"] .menu{
+  background:rgba(255,255,255,.94);
+  border-color:rgba(255,255,255,.75);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 20px 44px rgba(22,26,16,.16);
+}
+:root[data-mode="light"] .menu-item:hover{background:rgba(22,26,16,.06);}
+:root[data-mode="light"] .note-card.flagged{border-color:rgba(166,57,47,.85);}
+:root[data-mode="light"] .card-tags .due-pill.flagged{
+  background:rgba(198,72,61,.12);border-color:rgba(198,72,61,.26);color:#A6392F;
+}
+
+:root[data-mode="light"] .editor-mirror,
+:root[data-mode="light"] .rich{color:rgba(22,26,16,.88);}
+/* The accent is a light colour; as a caret on a white ground it disappears. */
+:root[data-mode="light"] #e-content{caret-color:var(--acc-ink);}
+
+:root[data-mode="light"] .tabbar{
+  background:rgba(252,252,254,.88);
+  border-color:var(--hair);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:0 8px 26px rgba(0,0,0,.12);
+}
+:root[data-mode="light"] .sheet{
+  background:rgba(255,255,255,.88);
+  border-color:rgba(255,255,255,.7);
+  backdrop-filter:blur(34px) saturate(180%);
+  -webkit-backdrop-filter:blur(34px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85), 0 -20px 56px rgba(22,26,16,.14);
+}
+:root[data-mode="light"] .sheet-scrim{background:rgba(22,26,16,.34);}
+:root[data-mode="light"] .modal{background:rgba(22,26,16,.42);}
+:root[data-mode="light"] .modal-card{
+  background:rgba(255,255,255,.84);
+  border-color:rgba(255,255,255,.75);
+  backdrop-filter:blur(34px) saturate(180%);
+  -webkit-backdrop-filter:blur(34px) saturate(180%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), 0 30px 70px rgba(22,26,16,.18);
+}
+:root[data-mode="light"] .toast{
+  background:rgba(255,255,255,.8);
+  border-color:rgba(255,255,255,.75);
+  backdrop-filter:blur(24px) saturate(190%);
+  -webkit-backdrop-filter:blur(24px) saturate(190%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9), var(--soft);
+}
+
+/* The coral and amber tints go pale-pink and pale-yellow on a light ground
+   unless the ink inside them comes down to meet it. */
+:root[data-mode="light"] .ghost-btn{
+  background:rgba(198,72,61,.1);border-color:rgba(198,72,61,.24);color:#A6392F;
+}
+:root[data-mode="light"] .ghost-btn:hover{background:rgba(198,72,61,.16);}
+:root[data-mode="light"] .conflict{background:rgba(138,107,14,.1);border-color:rgba(138,107,14,.24);}
+
+/* =========================================================================
+   Desktop.
+
+   Everything above this block describes a phone, and still does: nothing here
+   applies until the window is at least 1024px wide, and at 1023px the app is
+   the signed-off phone UI inside its frame, unchanged.
+
+   Past that the same components are re-laid-out rather than restyled. The type
+   ramp, the spacing scale, the tokens, the glass and the six themes are the
+   ones already declared above; what moves is where the boxes sit:
+
+     - #screen stops pretending to be a phone and becomes a two-column grid: a
+       fixed rail on the left, the board on the right.
+     - .tabbar unpacks. The same five buttons in the same order, laid out down
+       the rail with their labels always showing rather than floating in a pill
+       at the bottom of the screen. New card leads (order:-1) - on a phone it is
+       a thumb target in the middle of the bar, here it is the first command.
+     - the boards list stops being a modal you have to open. renderSideBoards()
+       draws it into the rail and marks the open one, so switching is one click
+       and you can see what else there is without asking.
+     - the board uses the width: two CSS columns become three, and four past
+       1440px. A one-column board stays a reading column rather than stretching
+       one card across 1200px.
+     - the card stops being a full screen and becomes a centred dialog. A full
+       screen is right on a phone, where there is no "beside"; covering a 1400px
+       window to edit four lines is not. Everything inside it is untouched - the
+       back button, the menu, the tags, the formatting bar in its footer.
+
+   Where a rule here has to beat one of the light-mode rules above, it is
+   prefixed with #screen for the specificity rather than reordered.
+   ========================================================================= */
+
+/* Off on a phone. .side generates no box at all, so .head, .tabbar and the
+   board keep the exact positions they have always had, and the rail's own
+   chrome does not exist. */
+.side{display:contents;}
+.side-brand{display:none;}
+.side-boards{display:none;}
+
+@media(min-width:1024px){
+
+  #shell{align-items:stretch;}
+  #screen{
+    max-width:1500px;height:100%;overflow:hidden;
+    /* the phone frame, undone */
+    padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+
+    display:grid;
+    grid-template-columns:272px minmax(0,1fr);
+    /* .greet and .chips are hidden by the client on every screen, but they
+       keep rows of their own so that showing either again lands it in the
+       column rather than on top of something. */
+    grid-template-rows:auto auto auto auto minmax(0,1fr);
+    grid-template-areas:
+      "side head"
+      "side greet"
+      "side search"
+      "side chips"
+      "side body";
+  }
+
+  /* ---------- the rail ---------- */
+
+  .side{
+    grid-area:side;
+    display:flex;flex-direction:column;gap:20px;
+    min-height:0;overflow-y:auto;scrollbar-width:none;
+    padding:24px 16px 20px;
+    background:var(--surface);
+    border-right:1px solid var(--hair);
+    backdrop-filter:blur(22px) saturate(104%);-webkit-backdrop-filter:blur(22px) saturate(104%);
+  }
+  .side::-webkit-scrollbar{display:none;}
+  /* Same reasoning as every other pane of glass in light mode: the surface
+     stays thin and the blur saturates harder. */
+  :root[data-mode="light"] .side{
+    backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
+  }
+
+  .side-brand{
+    display:flex;align-items:center;gap:10px;padding:2px 12px 0;flex-shrink:0;
+    font-size:19px;font-weight:800;letter-spacing:-.03em;color:var(--ink);
+  }
+  /* The mark is drawn, not painted: `fill="currentColor"` on the svg, so the
+     colour below is the whole of its theming. */
+  .side-mark{width:20px;height:20px;flex-shrink:0;color:var(--acc);}
+  /* Every accent is a light colour; as ink on a light ground it needs the
+     darker one, exactly like the rail's tabs above. */
+  :root[data-mode="light"] .side-mark{color:var(--acc-ink);}
+
+  /* The floating pill unpacks into a vertical nav. Same buttons, same order,
+     same states - only the direction and the labels change. */
+  #screen .side .tabbar{
+    position:static;left:auto;right:auto;bottom:auto;transform:none;z-index:auto;
+    flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;
+    padding:0;border:0;border-radius:0;background:none;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  .side .tab{
+    flex:none;flex-direction:row;align-items:center;
+    justify-content:flex-start;gap:12px;height:38px;padding:0 10px;
+    border-radius:var(--r-sm);font-size:15px;font-weight:500;
+    color:var(--ink-2);
+  }
+  .side .tab.on{background:var(--surface-2);color:var(--acc);font-weight:600;}
+  /* On a phone only the open tab is named, because there is no room for five
+     labels. Here there is. */
+  .side .tab .label{display:inline;}
+  .side .tab:active{transform:none;}
+  .side .tab:not(.on):hover{background:var(--surface-2);}
+  .side .tab.add{
+    order:-1;height:38px;margin-bottom:8px;
+    background:var(--acc-dim);color:var(--acc);font-weight:600;
+  }
+  .side .tab.add:hover{background:rgba(var(--acc-rgb),.26);}
+
+  /* ---------- boards, always on screen ---------- */
+
+  .side-boards{display:block;flex-shrink:0;}
+  .side-label{
+    font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-3);padding:0 12px;margin-bottom:8px;
+  }
+  .side-list{display:flex;flex-direction:column;gap:2px;}
+  .side-board{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    padding:9px 12px;border-radius:var(--r-sm);
+    font-size:14px;font-weight:600;letter-spacing:-.012em;color:var(--ink-2);
+    transition:background .16s ease,color .16s ease;
+  }
+  .side-board:hover{background:var(--surface-2);color:var(--ink);}
+  .side-board .bullet{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--hair-lift);}
+  .side-board .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .side-board.on{background:var(--surface-2);color:var(--ink);font-weight:700;}
+  .side-board.on .bullet{background:var(--acc);}
+  .side-board.new{color:var(--ink-3);}
+  .side-board.new:hover{color:var(--ink-2);}
+  .side-board.new .bullet{background:none;}
+
+  /* ---------- the top bar ---------- */
+
+  /* The rail names the board too, so this is the page's own title rather than
+     a second switcher: the two lines swap weight, the board leads, and you are
+     the quiet line under it. It is still the same button it always was. */
+  .head{grid-area:head;padding:16px 22px 14px;gap:14px;border-bottom:1px solid var(--hair);}
+  .head-id{display:flex;flex-direction:column;}
+  .head-name{order:2;font-size:13px;font-weight:600;color:var(--ink-2);margin-top:2px;}
+  #screen button.head-role{
+    order:1;margin-top:0;gap:7px;
+    font-size:21px;font-weight:800;letter-spacing:-.03em;color:var(--ink);
+  }
+  #screen button.head-role svg{width:15px;height:15px;opacity:.45;}
+
+  .greet{grid-area:greet;}
+  .chips{grid-area:chips;padding:0 22px 10px;}
+
+  /* A search field as wide as the window is a worse search field. */
+  .search{grid-area:search;margin:12px 22px 8px;max-width:440px;}
+
+  /* ---------- the board ---------- */
+
+  .body{grid-area:body;padding:16px 22px 40px;}
+
+  .cards.grid{column-count:3;column-gap:12px;}
+  .cards.grid .note-card{margin-bottom:12px;}
+  /* One column is a choice here, not a fallback, so it stays a column you can
+     read rather than one card stretched across the window. */
+  .cards.list{max-width:720px;}
+  /* The three empty states the board can be in are prose, so they belong in
+     the same column a one-column board gets rather than across the window. */
+  .body[data-tab="notes"] .empty{max-width:720px;}
+
+  /* The other three tabs are lists and forms. They do not want the width; they
+     only stop being the only thing on screen. */
+  .body[data-tab="calendar"]{max-width:860px;}
+  /* A square cell is right at a phone's 52px. At 118px it is a lot of nothing,
+     and it pushes the day list under the fold - so the month keeps its width
+     and loses the height it does not use. */
+  .cal-cell{aspect-ratio:1.6;}
+  .body[data-tab="activity"],.body[data-tab="you"]{max-width:720px;}
+
+  /* ---------- the card ---------- */
+
+  /* Centred on the board, not on the window - the rail is still there behind
+     the scrim, and a dialog whose left edge clips it reads as a near miss. */
+  #screen .sheet{
+    left:calc(50% + 136px);right:auto;top:50%;bottom:auto;
+    width:min(680px,calc(100% - 96px));
+    height:min(780px,calc(100% - 72px));
+    border-radius:var(--r-lg);
+    transform:translate(-50%,-50%) scale(.97);
+    opacity:0;pointer-events:none;
+    transition:transform .26s cubic-bezier(.32,.72,0,1),opacity .18s ease;
+    box-shadow:0 44px 100px rgba(0,0,0,.62);
+  }
+  #screen .sheet.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto;}
+  :root[data-mode="light"] #screen .sheet{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.85), 0 44px 100px rgba(22,26,16,.2);
+  }
+
+  :root[data-mode="light"] .side .tab.on,
+  :root[data-mode="light"] .side .tab.add{color:var(--acc-ink);}
+
+  /* Past 1024px the card is a centred dialog rather than the whole screen, so
+     the formatting bar has width to spare and Done can say so in words. This
+     only changes what is inside the button; the bar and every style button on
+     it keep the phone's geometry, per decision 13. */
+  #screen .fmt-done{width:auto;padding:0 13px;grid-auto-flow:column;}
+  #screen .fmt-done .fmt-done-label{display:inline;}
+
+  .modal-card{max-width:420px;}
+  /* Nothing floats at the bottom of the board any more, so the toast sits
+     where a toast sits. */
+  .toast{bottom:28px;}
+}
+
+/* Enough width for a fourth column without the cards going narrow. */
+@media(min-width:1440px){
+  .cards.grid{column-count:4;}
+}
+
+/* The Add to Home Screen steps, shown to an iPhone in a Safari tab where the
+   notification switch cannot work yet. Numbered because it is a sequence and
+   the order matters; tokens only, like everything else. */
+.ios-steps{display:flex;flex-direction:column;gap:12px;margin:2px 0 4px;}
+.ios-step{
+  display:flex;align-items:flex-start;gap:11px;
+  font-size:14.5px;line-height:1.45;font-weight:500;letter-spacing:-.01em;color:var(--ink-2);
+}
+.ios-step b{font-weight:700;color:var(--ink);}
+.ios-step-n{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  display:grid;place-items:center;
+  background:var(--acc-dim);color:var(--acc);
+  font-size:12px;font-weight:700;
+}
+:root[data-mode="light"] .ios-step-n{color:var(--acc-ink);}

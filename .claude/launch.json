@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "php-api",
+      "runtimeExecutable": "C:/Users/Dharanish/AppData/Local/Microsoft/WinGet/Packages/PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe/php.exe",
+      "runtimeArgs": [
+        "-S",
+        "localhost:8000",
+        "-t",
+        "public_html",
+        "tools/serve.php"
+      ],
+      "port": 8000,
+      "url": "http://localhost:8000",
+      "autoPort": false
+    },
+    {
+      "name": "preview-harness",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8787",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "tools/preview"
+      ],
+      "port": 8787,
+      "url": "http://127.0.0.1:8787",
+      "autoPort": true
+    }
+  ]
+}

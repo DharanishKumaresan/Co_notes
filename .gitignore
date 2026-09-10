@@ -1,0 +1,24 @@
+# Config and secrets
+.env
+
+# Generated preview build (rebuild with tools/preview/build.ps1)
+tools/preview/co-notes-preview.html
+
+# Uploaded profile photos are runtime data, not source. Keep the directory.
+public_html/uploads/avatars/*
+!public_html/uploads/avatars/.gitkeep
+
+# Editor and OS noise
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.swp
+
+# Build artifact - rebuilt on demand, 200KB of duplicated source.
+co-notes-deploy.zip
+*.zip
+
+# Runtime error log, written by app/Log.php. Can contain request details.
+logs/
+*.log

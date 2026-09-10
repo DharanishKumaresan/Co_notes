@@ -1,0 +1,59 @@
+# Co notes - Apache config for Hostinger shared hosting.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Never serve config or server code, wherever it ended up.
+  RewriteRule ^\.env  - [F,L]
+  RewriteRule ^app/   - [F,L]
+  RewriteRule ^tools/ - [F,L]
+  RewriteRule ^migrations/ - [F,L]
+
+  # /api/<route>  ->  api/index.php with the route in ?_route=
+  RewriteRule ^api/?$            api/index.php?_route=  [QSA,L]
+  RewriteRule ^api/(.*)$         api/index.php?_route=$1 [QSA,L]
+
+  # Client-side routes (/b/<slug>, /join/<token>) are served by the SPA shell.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(b|join)(/.*)?$   index.html [L]
+</IfModule>
+
+# Apache does not know this extension out of the box, and a manifest served as
+# text/plain is ignored - the app silently stops being installable.
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Static assets are fingerprint-free, so keep the cache short and revalidate.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=300, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+
+  # The worker decides when every other asset updates, so it must never be the
+  # stale one. Its scope is the whole site, which it only gets from the root.
+  <Files "sw.js">
+    Header set Cache-Control "no-cache"
+    Header set Service-Worker-Allowed "/"
+  </Files>
+
+  # The icons are content-stable; let them sit.
+  <FilesMatch "^(icon-|apple-touch-icon|favicon-).*\.png$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>

@@ -1,0 +1,33 @@
+# Uploaded files are data, never code. Nothing in here may ever execute.
+
+Options -Indexes -ExecCGI
+AddHandler default-handler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py .sh
+
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag engine off
+</IfModule>
+
+# Serve only image types, whatever else ends up here.
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Content-Disposition "inline"
+  </IfModule>
+</FilesMatch>
+
+<FilesMatch "^(?!.*\.(jpg|jpeg|png|gif|webp)$).*$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>

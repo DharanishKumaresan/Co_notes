@@ -1,0 +1,10 @@
+# Belt and braces: if this directory ever ends up inside the web root, refuse to
+# serve it. public_html/.htaccess already rewrites these paths away, but that
+# rule needs mod_rewrite; this one does not.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Order allow,deny
+  Deny from all
+</IfModule>
