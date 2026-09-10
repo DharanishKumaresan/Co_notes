@@ -13,6 +13,12 @@ on each board, an optional **board profile** that can override the name and the
 photo just for that board. The theme is not personal: it belongs to the board
 and everyone on it sees the same one.
 
+**[docs/architecture.html](docs/architecture.html)** is an illustrated walk
+through how the whole thing fits together — the request lifecycle, the
+`board_events` sync spine that replaces a WebSocket, the write transaction and
+its 409, and why nearly every decision here is downstream of the host. Open it
+in a browser; it is a single self-contained file with no assets.
+
 ---
 
 ## Stack, and why

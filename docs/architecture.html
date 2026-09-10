@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How Co notes is built, and why shared hosting forced nearly every decision in it.">
+<title>Co notes Architecture</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+:root{
+  --paper:#F2F4F6;
+  --surface:#FFFFFF;
+  --sunk:#E8ECEF;
+  --ink:#141C24;
+  --ink-2:#3D4B57;
+  --muted:#5C6B78;
+  --rule:#D3D9DE;
+  --rule-soft:#E2E7EB;
+  --rust:#B4441F;
+  --rust-wash:#F7E9E4;
+  --slate:#3A6B96;
+  --slate-wash:#E7EEF4;
+
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  --measure:66ch;
+  --gut:clamp(16px,4vw,40px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#11171C;
+    --surface:#182028;
+    --sunk:#0C1116;
+    --ink:#DDE4EA;
+    --ink-2:#B3C0CB;
+    --muted:#8497A5;
+    --rule:#2A353F;
+    --rule-soft:#212B34;
+    --rust:#E0784F;
+    --rust-wash:#2B1A14;
+    --slate:#7FAED6;
+    --slate-wash:#152029;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11171C;
+  --surface:#182028;
+  --sunk:#0C1116;
+  --ink:#DDE4EA;
+  --ink-2:#B3C0CB;
+  --muted:#8497A5;
+  --rule:#2A353F;
+  --rule-soft:#212B34;
+  --rust:#E0784F;
+  --rust-wash:#2B1A14;
+  --slate:#7FAED6;
+  --slate-wash:#152029;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--serif);font-size:17px;line-height:1.68;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 var(--gut) 96px;}
+.col{max-width:var(--measure);}
+
+/* ---------- masthead ---------- */
+.mast{padding:72px 0 40px;border-bottom:2px solid var(--ink);}
+.kicker{
+  font-family:var(--mono);font-size:11.5px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--rust);
+  margin:0 0 22px;
+}
+h1{
+  font-family:var(--sans);font-weight:700;font-size:clamp(38px,6.2vw,60px);
+  line-height:1.04;letter-spacing:-.028em;margin:0 0 20px;text-wrap:balance;
+}
+.standfirst{
+  font-size:clamp(18px,2.3vw,21px);line-height:1.55;color:var(--ink-2);
+  max-width:60ch;margin:0;
+}
+.facts{
+  display:flex;flex-wrap:wrap;gap:0;margin-top:38px;
+  border-top:1px solid var(--rule);
+}
+.fact{
+  flex:1 1 150px;padding:16px 20px 14px 0;border-right:1px solid var(--rule-soft);
+}
+.fact:last-child{border-right:0;}
+.fact b{
+  display:block;font-family:var(--mono);font-weight:600;font-size:22px;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--ink);
+}
+.fact span{
+  display:block;font-family:var(--mono);font-size:10.5px;font-weight:400;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:5px;
+}
+
+/* ---------- sections ---------- */
+section{padding:56px 0 0;}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--rule);max-width:220px;}
+h2{
+  font-family:var(--sans);font-weight:600;font-size:clamp(25px,3.4vw,33px);
+  line-height:1.18;letter-spacing:-.022em;margin:0 0 18px;text-wrap:balance;
+}
+h3{
+  font-family:var(--sans);font-weight:600;font-size:18.5px;letter-spacing:-.012em;
+  margin:34px 0 10px;
+}
+p{margin:0 0 17px;}
+a{color:var(--rust);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;}
+code{
+  font-family:var(--mono);font-size:.87em;background:var(--sunk);
+  padding:.1em .34em;border-radius:3px;color:var(--ink);
+}
+strong{font-weight:600;}
+em{font-style:italic;}
+
+/* ---------- the constraint device: only where the host forced the hand ---------- */
+.constraint{
+  border-left:3px solid var(--rust);background:var(--rust-wash);
+  padding:16px 20px;margin:24px 0;max-width:var(--measure);
+}
+.constraint p{margin:0;font-size:16px;line-height:1.6;}
+.constraint p+p{margin-top:10px;}
+.constraint .tag{
+  display:block;font-family:var(--mono);font-size:10.5px;font-weight:600;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--rust);margin-bottom:7px;
+}
+
+/* ---------- figures ---------- */
+figure{margin:34px 0;padding:0;}
+.figbox{
+  background:var(--surface);border:1px solid var(--rule);
+  padding:26px 20px 20px;overflow-x:auto;
+}
+figure svg{display:block;width:100%;max-width:100%;height:auto;color:var(--ink-2);}
+figcaption{
+  font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--muted);
+  margin-top:12px;max-width:70ch;
+}
+figcaption b{color:var(--ink-2);font-weight:500;}
+
+/* ---------- data table ---------- */
+.tablewrap{overflow-x:auto;margin:22px 0 8px;}
+table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:13px;}
+th,td{text-align:left;padding:9px 16px 9px 0;border-bottom:1px solid var(--rule-soft);vertical-align:top;}
+th{
+  font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--rule);white-space:nowrap;
+}
+td.num{font-variant-numeric:tabular-nums;text-align:right;padding-right:26px;white-space:nowrap;}
+td.n{color:var(--muted);}
+tbody tr:last-child td{border-bottom:0;}
+
+/* ---------- verb pills ---------- */
+.verb{
+  font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  padding:2px 6px;border-radius:3px;background:var(--slate-wash);color:var(--slate);
+}
+
+/* ---------- the ledger ---------- */
+.ledger{display:grid;gap:0;margin:24px 0;border-top:1px solid var(--rule);}
+.row{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:4px;
+  padding:16px 0;border-bottom:1px solid var(--rule-soft);
+}
+@media(min-width:720px){
+  .row{grid-template-columns:230px minmax(0,1fr);gap:28px;align-items:start;}
+}
+.row dt{
+  font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink);
+  line-height:1.5;
+}
+.row dd{margin:0;font-size:16px;line-height:1.6;color:var(--ink-2);}
+
+/* ---------- file tree ---------- */
+pre.tree{
+  font-family:var(--mono);font-size:12.5px;line-height:1.85;margin:22px 0;
+  background:var(--surface);border:1px solid var(--rule);
+  padding:20px;overflow-x:auto;color:var(--ink-2);
+}
+pre.tree b{color:var(--ink);font-weight:600;}
+pre.tree i{color:var(--rust);font-style:normal;}
+pre.tree u{color:var(--muted);text-decoration:none;}
+
+.foot{
+  margin-top:72px;padding-top:22px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.7;
+}
+:focus-visible{outline:2px solid var(--rust);outline-offset:2px;}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">Architecture reference &middot; shell v20</p>
+  <h1>Co notes Architecture</h1>
+  <p class="standfirst">A shared notes board built for the most constrained host there is: PHP on shared hosting, no Composer, no build step, no long-lived process. Nearly every decision below is downstream of that.</p>
+
+  <div class="facts">
+    <div class="fact"><b>4,960</b><span>lines in app/</span></div>
+    <div class="fact"><b>4,734</b><span>lines of client</span></div>
+    <div class="fact"><b>42</b><span>API endpoints</span></div>
+    <div class="fact"><b>8</b><span>migrations</span></div>
+    <div class="fact"><b>0</b><span>dependencies</span></div>
+  </div>
+</header>
+
+<section>
+  <p class="eyebrow">The premise</p>
+  <h2>The host is the architect</h2>
+  <div class="col">
+    <p>Co notes is a multi-board shared notes app. Everyone on a board sees the same cards and can read, edit, flag and delete any of them — the board is the unit of sharing, and there are no per-card permissions.</p>
+    <p>That product description explains almost none of the code. What explains the code is the deployment target: <strong>Hostinger shared hosting with phpMyAdmin</strong>. No shell guaranteed, no daemon, no package manager, no build pipeline. Three consequences propagate through every layer.</p>
+  </div>
+
+  <div class="constraint">
+    <span class="tag">Forced by the host</span>
+    <p><strong>No Composer</strong> → zero dependencies. Every line is first-party, including the Web Push cryptography. A <code>spl_autoload_register</code> closure in <code>bootstrap.php</code> maps <code>CoNotes\Foo</code> to <code>app/Foo.php</code>. That is the entire dependency system.</p>
+    <p><strong>No build step</strong> → <code>public_html/</code> is the deployable artifact exactly as it sits on disk. Nothing is transpiled, bundled or minified. The client is two files you can open in an editor.</p>
+    <p><strong>No long-lived process</strong> → no WebSocket. Live collaboration runs over a cursor-based delta poll instead, which is the single most consequential decision in the codebase.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Physical layout</p>
+  <h2>What is reachable by URL, and what is not</h2>
+  <div class="col">
+    <p>The most important line in the whole project is the boundary between <code>public_html/</code> and everything beside it. Server code lives <em>outside</em> the web root, so a misconfigured Apache cannot serve <code>.php</code> source or the <code>.env</code> that holds the database password and the VAPID private key.</p>
+  </div>
+
+<pre class="tree">domains/yourdomain.com/
+├── <i>.env</i>                    <u>secrets — never in git, never web-reachable</u>
+├── <b>public_html/</b>            <u>the web root: this and only this is served</u>
+│   ├── index.html           <u>the shell</u>
+│   ├── assets/app.js        <u>4,238 lines — the entire client</u>
+│   ├── assets/app.css       <u>496 lines</u>
+│   ├── api/index.php        <u>52 lines — front controller, finds bootstrap</u>
+│   ├── sw.js                <u>service worker; must sit at the root for scope</u>
+│   └── uploads/avatars/     <u>PHP execution disabled via .htaccess</u>
+├── <b>app/</b>                    <u>20 classes, 4,960 lines — outside the web root</u>
+├── <b>migrations/</b>             <u>001…008, forward-only</u>
+└── <b>tools/</b>                  <u>doctor, migrate, cleanup + remind (cron)</u></pre>
+
+  <div class="col">
+    <p>Defence is layered rather than assumed. <code>public_html/.htaccess</code> rewrites <code>^app/</code>, <code>^tools/</code>, <code>^migrations/</code> and <code>^\.env</code> to <code>403</code> in case the tree is ever flattened into the web root, and <code>app/.htaccess</code> and <code>tools/.htaccess</code> independently deny all — one via <code>mod_rewrite</code>, the other via <code>mod_authz_core</code>, so neither module being absent leaves the directory exposed.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Request lifecycle</p>
+  <h2>One entry point, one switch</h2>
+  <div class="col">
+    <p>There is no framework and no router library. Every request under <code>/api/</code> is rewritten to a single PHP file, which locates the bootstrap, which loads the environment and hands the path to one <code>switch</code> over URL segments.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 520" role="img" aria-label="A request travels from the browser through .htaccess rewriting to api/index.php inside the web root, then crosses the web-root boundary into bootstrap.php, Router.php, a domain class and Db.php before reaching MySQL and returning JSON.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="currentColor"/>
+          </marker>
+          <marker id="ar-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="var(--slate)"/>
+          </marker>
+        </defs>
+
+        <!-- boundary band -->
+        <rect x="16" y="86" width="668" height="132" fill="var(--slate-wash)" stroke="none"/>
+        <text x="28" y="106" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.2" fill="var(--slate)">SERVED BY APACHE — public_html/</text>
+
+        <!-- 1 browser -->
+        <rect x="180" y="20" width="340" height="46" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="41" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">Browser</text>
+        <text x="350" y="57" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">GET /api/boards/studio/changes?since=41</text>
+        <line x1="350" y1="66" x2="350" y2="116" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- 2 htaccess -->
+        <rect x="180" y="118" width="340" height="42" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="135" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">.htaccess</text>
+        <text x="350" y="150" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">rewrite → api/index.php?_route=…</text>
+        <line x1="350" y1="160" x2="350" y2="176" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- 3 front controller -->
+        <rect x="180" y="178" width="340" height="34" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="199" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">api/index.php &#183; 52 lines</text>
+
+        <!-- the boundary -->
+        <line x1="16" y1="234" x2="684" y2="234" stroke="var(--rust)" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="684" y="228" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.2" fill="var(--rust)">WEB ROOT ENDS — NOT URL-REACHABLE</text>
+        <line x1="350" y1="212" x2="350" y2="262" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- 4 bootstrap -->
+        <rect x="180" y="264" width="340" height="52" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="283" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">app/bootstrap.php</text>
+        <text x="350" y="299" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">PHP 8.1 gate &#183; autoloader &#183; .env</text>
+        <text x="350" y="311" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">display_errors off, log_errors on</text>
+        <line x1="350" y1="316" x2="350" y2="332" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- 5 router -->
+        <rect x="180" y="334" width="340" height="52" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="353" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">app/Router.php &#183; 629 lines</text>
+        <text x="350" y="369" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">one switch over path segments</text>
+        <text x="350" y="381" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">auth · session · boards · notes · calendar · invites · push</text>
+        <line x1="350" y1="386" x2="350" y2="402" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar)"/>
+
+        <!-- 6 domain -->
+        <rect x="180" y="404" width="340" height="42" fill="var(--surface)" stroke="var(--slate)" stroke-width="1.4"/>
+        <text x="350" y="421" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--slate)">Notes · Boards · Calendar · Activity</text>
+        <text x="350" y="436" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">domain logic + transactions</text>
+        <line x1="350" y1="446" x2="350" y2="462" stroke="var(--slate)" stroke-width="1.2" marker-end="url(#ar-slate)"/>
+
+        <!-- 7 db -->
+        <rect x="180" y="464" width="340" height="34" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="485" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">Db.php → PDO → MySQL</text>
+
+        <!-- return path -->
+        <line x1="560" y1="480" x2="560" y2="52" stroke="var(--slate)" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#ar-slate)"/>
+        <line x1="520" y1="480" x2="560" y2="480" stroke="var(--slate)" stroke-width="1.2"/>
+        <line x1="520" y1="43" x2="560" y2="43" stroke="var(--slate)" stroke-width="1.2"/>
+        <text x="572" y="262" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--slate)">JSON</text>
+        <text x="572" y="276" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--slate)">Http::json()</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1.</b> The full path of one API request. Everything below the dashed rule sits outside the web root and can only be reached through <code>api/index.php</code> — which is why a rewrite-rule failure degrades to a 404 rather than serving PHP source. Errors are logged, never returned; responses are always <code>{ error: { code, message } }</code>.</figcaption>
+  </figure>
+
+  <div class="col">
+    <p>The front controller tries two bootstrap paths — <code>../../app/bootstrap.php</code> for the correct layout, then <code>../app/bootstrap.php</code> for a flattened upload — and returns a structured <code>misconfigured</code> JSON error if neither exists. That is a deployment concession, not architecture, but it turns the most common install mistake into a legible message instead of a white screen.</p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Route root</th><th class="num">Verbs</th><th>Responsibility</th></tr></thead>
+      <tbody>
+        <tr><td><code>/api/auth</code></td><td class="num n">2</td><td>OAuth begin and callback, per provider</td></tr>
+        <tr><td><code>/api/session</code></td><td class="num n">5</td><td>Who am I, master profile, photo, sign out</td></tr>
+        <tr><td><code>/api/boards</code></td><td class="num n">18</td><td>Boards, members, theme, rename, reset, delete, <b>changes</b></td></tr>
+        <tr><td><code>/api/notes</code></td><td class="num n">6</td><td>Per-note create, patch, soft delete, restore</td></tr>
+        <tr><td><code>/api/calendar</code></td><td class="num n">4</td><td>Board events</td></tr>
+        <tr><td><code>/api/invites</code></td><td class="num n">4</td><td>Mint, peek, redeem, revoke</td></tr>
+        <tr><td><code>/api/push</code></td><td class="num n">3</td><td>Subscribe, unsubscribe, <code>pending</code></td></tr>
+        <tr><td><code>/api/health</code></td><td class="num n">1</td><td>Liveness</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">board_events</p>
+  <h2>The sync spine</h2>
+  <div class="col">
+    <p>This is the heart of the system and the part most worth understanding. Shared hosting cannot hold a socket open, so there is no push channel from server to client. Instead every mutation appends a row to <code>board_events</code>, and that table's auto-increment id <em>is</em> the synchronisation cursor.</p>
+    <p>Clients poll <code>GET /boards/:slug/changes?since=N</code> and receive only what happened after event <code>N</code>. The client stores the highest id it has applied. There is no diffing, no timestamps, no clock comparison — just a monotonic integer that both sides agree on.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 340" role="img" aria-label="Two browsers poll a shared board_events table every second. One browser's write appends event 42, which the other browser receives on its next poll and applies, advancing its cursor from 41 to 42.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="currentColor"/>
+          </marker>
+          <marker id="ar2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="var(--rust)"/>
+          </marker>
+          <marker id="ar2s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="var(--slate)"/>
+          </marker>
+        </defs>
+
+        <!-- client A -->
+        <rect x="16" y="34" width="180" height="70" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="106" y="56" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">Rina — phone</text>
+        <text x="106" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">ticks a checkbox</text>
+        <text x="106" y="92" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--rust)">cursor 41 → 42</text>
+
+        <!-- client B -->
+        <rect x="504" y="34" width="180" height="70" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="594" y="56" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">Sam — laptop</text>
+        <text x="594" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">reading the board</text>
+        <text x="594" y="92" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--slate)">cursor 41 → 42</text>
+
+        <!-- the table -->
+        <rect x="210" y="150" width="280" height="150" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+        <text x="350" y="172" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="currentColor">board_events</text>
+        <line x1="210" y1="182" x2="490" y2="182" stroke="var(--rule)" stroke-width="1"/>
+        <text x="228" y="203" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)">39   note.created</text>
+        <text x="228" y="223" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)">40   board.theme</text>
+        <text x="228" y="243" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--muted)">41   member.joined</text>
+        <rect x="218" y="252" width="264" height="24" fill="var(--rust-wash)"/>
+        <text x="228" y="269" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--rust)">42   note.updated</text>
+        <text x="350" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--muted)">AUTO_INCREMENT id = the cursor</text>
+
+        <!-- write arrow -->
+        <path d="M106 104 L106 200 L204 200" fill="none" stroke="var(--rust)" stroke-width="1.4" marker-end="url(#ar2r)"/>
+        <text x="112" y="140" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--rust)">append, inside</text>
+        <text x="112" y="153" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--rust)">the transaction</text>
+
+        <!-- poll arrow -->
+        <path d="M594 104 L594 226 L496 226" fill="none" stroke="var(--slate)" stroke-width="1.4" marker-end="url(#ar2s)"/>
+        <text x="512" y="140" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--slate)">poll ?since=41</text>
+        <text x="512" y="153" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--slate)">every 1000 ms</text>
+        <text x="512" y="166" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">15000 ms when hidden</text>
+
+        <!-- latency note -->
+        <text x="350" y="322" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">worst-case propagation ≈ one poll interval</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 2.</b> The replacement for a WebSocket. The cursor is an integer both sides agree on, so a client that has been offline for an hour resumes with the same request shape as one that polled a second ago. <code>tick()</code> in <code>app.js</code> is the only function that knows events arrive by polling — move to a host with daemons and that one function is the entire migration.</figcaption>
+  </figure>
+
+  <h3>Two event types deliberately break the pattern</h3>
+  <div class="col">
+    <p><code>board.theme</code> and <code>board.renamed</code> look like they should trigger a resync and do not. A theme is one attribute on <code>&lt;html&gt;</code> and a name is one string in the header; neither touches note data. So <code>changes()</code> returns the new value inline and the client repaints in place. Making them consistent with the others would mean reloading the whole board every time somebody picked a colour, once per second.</p>
+    <p><code>member.updated</code> goes the other way and <em>does</em> force a full resync, because a profile change restyles that person's name and avatar on every card they have ever touched — a delta cannot express that.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Optimistic concurrency</p>
+  <h2>The write path, and what makes it safe</h2>
+  <div class="col">
+    <p>The unit of write is a <strong>note</strong>, never the board. Each note carries an integer <code>version</code>; a <code>PATCH</code> carrying a stale version is rejected with <code>409</code> and the server's current copy, and the client offers <em>Keep mine</em> or <em>Use theirs</em>. No CRDTs, no operational transform — those are a different project.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 700 400" role="img" aria-label="A note update opens a transaction, runs a conditional UPDATE guarded by the version column, and branches: zero affected rows rolls back and returns 409 with the server copy, while one affected row appends to note_edits and board_events and commits. The push notification is sent only after the commit.">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="currentColor"/>
+          </marker>
+          <marker id="ar3r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <polygon points="0,1 9,5 0,9" fill="var(--rust)"/>
+          </marker>
+        </defs>
+
+        <!-- transaction envelope -->
+        <rect x="150" y="46" width="400" height="228" fill="none" stroke="var(--slate)" stroke-width="1.2" stroke-dasharray="5 4"/>
+        <text x="160" y="40" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.1" fill="var(--slate)">Db::begin() … Db::commit()</text>
+
+        <rect x="180" y="62" width="340" height="34" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">UPDATE notes … WHERE version = :v</text>
+        <line x1="350" y1="96" x2="350" y2="114" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar3)"/>
+
+        <!-- decision -->
+        <rect x="230" y="116" width="240" height="34" fill="var(--sunk)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="137" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">rowCount() === 0 ?</text>
+
+        <!-- conflict branch -->
+        <path d="M230 133 L96 133 L96 200" fill="none" stroke="var(--rust)" stroke-width="1.3" marker-end="url(#ar3r)"/>
+        <text x="106" y="126" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--rust)">yes — somebody</text>
+        <text x="106" y="139" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--rust)">saved first</text>
+        <rect x="16" y="202" width="160" height="52" fill="var(--rust-wash)" stroke="var(--rust)" stroke-width="1.3"/>
+        <text x="96" y="222" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="var(--rust)">rollBack()</text>
+        <text x="96" y="240" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--rust)">409 + server copy</text>
+
+        <!-- happy path -->
+        <line x1="350" y1="150" x2="350" y2="168" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <text x="360" y="164" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">no</text>
+        <rect x="180" y="170" width="340" height="32" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="190" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">append note_edits</text>
+        <line x1="350" y1="202" x2="350" y2="216" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="180" y="218" width="340" height="32" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="350" y="238" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="currentColor">append board_events &#183; the cursor moves</text>
+
+        <line x1="350" y1="274" x2="350" y2="294" stroke="currentColor" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <text x="360" y="290" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--slate)">commit</text>
+
+        <!-- after commit -->
+        <rect x="150" y="296" width="400" height="76" fill="var(--slate-wash)" stroke="var(--slate)" stroke-width="1.3"/>
+        <text x="350" y="318" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="var(--slate)">Push::notifyFlagged() — outside the transaction</text>
+        <text x="350" y="338" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">a push service is somebody else's server: it must not</text>
+        <text x="350" y="352" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">hold a row lock or roll back a save. Failures are</text>
+        <text x="350" y="366" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--muted)">logged and swallowed.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 3.</b> <code>Notes::update()</code>. The conflict check <em>is</em> <code>rowCount()</code> — the guard <code>WHERE version = :v</code> either matches or it doesn't. That works whether the driver reports matched or changed rows only because <code>version = version + 1</code> is unconditional, so a successful update always changes the row. Keep that increment unconditional.</figcaption>
+  </figure>
+
+  <div class="constraint">
+    <span class="tag">Invariant</span>
+    <p>Every mutation appends to <strong>both</strong> <code>note_edits</code> and <code>board_events</code>, inside the same transaction as the write. A write that lands without its event is invisible to every other client; an event without its write is a phantom. Neither is recoverable after the fact, so they share a transaction.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Identity</p>
+  <h2>One person, two names</h2>
+  <div class="col">
+    <p>Each user has a master profile, and optionally a different display name, colour and photo <em>per board</em>. The per-board override lives in nullable columns on <code>board_members</code>, where <code>NULL</code> means "inherit". Nothing is copied at join time, so editing the master profile updates every board that hasn't overridden it.</p>
+    <p>The resolution is a <code>COALESCE</code>, and it lives in exactly one place: <code>app/Identity.php</code> (90 lines). Every query that renders a person composes <code>Identity::columns()</code> and <code>Identity::joins()</code> — a card's last editor, its creator, the activity feed, the member list, the push feed.</p>
+    <p>A single query can carry two different people, which is what the alias arguments are for: <code>Notes</code> joins <code>updated_by</code> under <code>u</code>/<code>bm</code> and <code>created_by</code> under <code>cu</code>/<code>cbm</code>, then reads them back with <code>Identity::fromRow($r, 'created_by', 'creator')</code>. Add a new surface that renders a person without going through this and it will silently show master names while everything else shows board names — the failure is cosmetic, consistent, and very hard to spot.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">public_html/assets/app.js</p>
+  <h2>The client, without a framework</h2>
+  <div class="col">
+    <p>4,238 lines of plain ES, no build step, no virtual DOM. State is a dozen module-level variables and rendering is string templating into <code>innerHTML</code>. That sounds primitive and mostly is; it is also why the file opens in any editor and ships without a toolchain.</p>
+    <p>The network surface is deliberately narrow — <strong>34 call sites</strong>, all through one <code>api()</code> helper and a small group of functions marked "the seam". Everything else in the client is ignorant of HTTP.</p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Constant</th><th class="num">Value</th><th>What it governs</th></tr></thead>
+      <tbody>
+        <tr><td><code>SYNC_ACTIVE</code></td><td class="num">1000 ms</td><td>Delta poll while the tab is in front</td></tr>
+        <tr><td><code>SYNC_HIDDEN</code></td><td class="num">15000 ms</td><td>…and while it is not</td></tr>
+        <tr><td><code>DEBOUNCE</code></td><td class="num">650 ms</td><td>Typing settles before a save fires</td></tr>
+        <tr><td><code>RETRY_MAX</code></td><td class="num">30000 ms</td><td>Offline backoff ceiling</td></tr>
+        <tr><td><code>REMIND_DAYS</code></td><td class="num">2 days</td><td>How far ahead a reminder fires</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Saves in flight</h3>
+  <div class="col">
+    <p>The subtlest code in the client is four lines. <code>flushSave()</code> samples an <code>editSeq</code> counter before the request and compares it after: if it moved, the user typed while the save was in the air, so the server's response must <em>not</em> replace their newer text. Instead the client keeps the local text, takes the server's new version number, and saves again. Remove that comparison and typing during a slow save silently loses keystrokes.</p>
+  </div>
+
+  <h3>Search is client-side, on purpose</h3>
+  <div class="col">
+    <p>The API hands the client every live card for the open board up front, so a search endpoint would be a second source of truth for data already in memory — and it keeps working offline. The tradeoff is stated plainly: it covers the open board's live cards only, not the trash and not other boards. If a board ever outgrows the client's memory, this is the first thing that has to move server-side, along with the delta sync.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">notes.content</p>
+  <h2>Formatting that is text all the way down</h2>
+  <div class="col">
+    <p>Cards support bold, italic, underline, headings, bullets and checklists. None of it is stored as HTML. The content column holds a small markdown subset as <strong>plain text</strong>, and that is a security decision before it is a formatting one: the board is shared, so storing HTML would mean sanitising one member's input before showing it to everyone else on their board.</p>
+    <p>Because it is text, the server needed no changes at all — <code>Validate::clean()</code> only strips control characters, so every marker survives the round trip untouched.</p>
+  </div>
+
+  <div class="constraint">
+    <span class="tag">XSS invariant</span>
+    <p><code>renderRich()</code> escapes first and applies markers second. Never the other way round, or a card becomes an XSS vector for everyone on the board.</p>
+  </div>
+
+  <h3>Why the editor has a mirror</h3>
+  <div class="col">
+    <p>A <code>&lt;textarea&gt;</code> renders in exactly one font — it cannot show part of its text as bold. So the editor paints its own formatting: <code>#e-content</code> is a transparent textarea sitting over <code>#e-mirror</code>, a styled copy of the same string. The textarea still owns the caret and is still the source of truth, which is the point — the save path, the 409 flow and the plain-text invariant all read <code>eContent.value</code> and none of them had to move. A <code>contenteditable</code> would have touched every one of them.</p>
+    <p>The constraint this creates is absolute: <strong>the mirror may not change any glyph's advance width.</strong> If the mirror lays a character out even slightly wider, the painted text slides out from under the caret, worsening with every character on the line. Measured on this stack, a real <code>font-weight: 750</code> costs <strong>+17.9 px</strong> across one line of prose. So bold is faked with <code>-webkit-text-stroke</code>, headings are not enlarged, and markers are dimmed to 30% rather than hidden — their width still has to be there.</p>
+    <p>Italic is the interesting case. It is free only when the resolved face has no italic of its own and the browser shears the upright instead. Measured: Inter drifts <strong>0 px</strong>, the system font stack <strong>4.2 px</strong>. So <code>italicIsMetricSafe()</code> measures once at runtime and only then adds <code>.italic-ok</code> — which means the editor slants italic on some platforms and silently does not on others, including every Apple device, where SF Pro has always had a true italic.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">app/Push.php · 701 lines</p>
+  <h2>Web Push with no crypto library</h2>
+  <div class="col">
+    <p>The largest single class in the project exists because of the no-Composer rule. Web Push normally means encrypting a payload with ECDH key agreement, HKDF and AES-128-GCM against the browser's public key — a lot of hand-rolled cryptography to get subtly wrong.</p>
+    <p>The way out is that a push is allowed to carry <strong>no payload at all</strong>. Co notes sends a signed "wake up" and nothing else; <code>sw.js</code> then calls <code>GET /api/push/pending</code> over ordinary authenticated HTTPS and finds out what happened. The only cryptography left is the VAPID JWT — one <code>openssl_sign()</code>, plus DER wrangling to rebuild the EC key and reshape the signature into the raw form the spec wants.</p>
+    <p>The cost is that the browser must be online to display the notification, which for a shared board is no cost at all.</p>
+  </div>
+
+  <h3>Four triggers, two kinds</h3>
+  <div class="ledger">
+    <div class="row"><dt>Somebody flagged a card</dt><dd>Goes to everyone <em>except</em> the person who did it. It is news about another person.</dd></div>
+    <div class="row"><dt>Somebody added an event</dt><dd>Same — excludes the actor.</dd></div>
+    <div class="row"><dt>A card came due</dt><dd>Goes to <em>everyone including</em> whoever set the date. A reminder is not news about a person; it is the thing itself arriving, and whoever wrote "call the tiler Thursday" is exactly who needs telling on Wednesday.</dd></div>
+    <div class="row"><dt>An event is coming up</dt><dd>Same — nobody is excluded.</dd></div>
+  </div>
+
+  <div class="col">
+    <p>Reminders need their own marker because nobody acted, which is what <code>reminded_at</code> on <code>notes</code> and <code>calendar_events</code> is for. It is stamped in the same <code>UPDATE</code> that selects the row, which is what makes <code>tools/remind.php</code> safe to cron as often as you like. It is deliberately <em>not</em> the existing userless <code>note_edits</code> row with <code>action = 'due'</code>: that one fires <em>on</em> the due date and a reminder fires <em>before</em> it, so one marker cannot mean both — and overloading it would have made unflagging a card silently re-arm its reminder.</p>
+    <p>A subscription is a <strong>browser, not a person</strong>. The same user on a phone and a laptop is two rows, and both buzz.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">sw.js</p>
+  <h2>The shell, and the versioning that keeps it honest</h2>
+  <div class="col">
+    <p>The service worker caches the shell so the app opens without a network. That is all it may do — <code>/api/</code> is never cached, and neither is <code>/uploads/</code>. A card served from disk would be a lie about what everyone else on the board can see, and it would sit behind the version checks that stop two people clobbering each other.</p>
+  </div>
+
+  <div class="constraint">
+    <span class="tag">A bug that shipped</span>
+    <p>Navigations are network-first; assets used to be cache-first with a background refresh. So for one launch after every deploy, the browser ran the <em>new</em> <code>index.html</code> against the <em>previous</em> <code>app.js</code>. The new markup had a button in it that the old script had no handler for, so the button was visibly present and did nothing — and the second launch fixed itself, which made it look intermittent rather than broken.</p>
+    <p>The fix is that shell assets now carry <code>?v=N</code>, matched to <code>VERSION</code> and <code>CACHE</code> in <code>sw.js</code>. A versioned URL cannot be answered from a cache that predates it, so markup and script can no longer disagree. Bumping <code>CACHE</code> alone was never sufficient. <code>tools/doctor.php</code> fails if the numbers drift apart.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Schema</p>
+  <h2>Eleven tables, three that carry weight</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Table</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>board_events</code></td><td>The sync spine. Auto-increment id is the cursor every client polls against.</td></tr>
+        <tr><td><code>board_members</code></td><td>Membership <em>and</em> the per-board profile. Three nullable columns mean "inherit".</td></tr>
+        <tr><td><code>note_edits</code></td><td>Audit trail; also carries the userless <code>action='due'</code> marker. Consecutive edits by one person inside two minutes coalesce.</td></tr>
+        <tr><td class="n"><code>users</code> <code>sessions</code> <code>oauth_states</code></td><td class="n">Identity and auth</td></tr>
+        <tr><td class="n"><code>boards</code> <code>notes</code></td><td class="n">The domain</td></tr>
+        <tr><td class="n"><code>calendar_events</code> <code>calendar_event_edits</code></td><td class="n">Board calendar and its history</td></tr>
+        <tr><td class="n"><code>board_invites</code> <code>push_subscriptions</code></td><td class="n">Joining, and notification endpoints</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>Migrations are forward-only and numbered <code>001</code> to <code>008</code>. Order is load-bearing: <code>003</code> drops <code>board_members.theme</code>, <code>004</code> alters <code>notes</code>, <code>005</code> depends on the table <code>004</code> leaves behind. Only <code>007</code> is safe to re-run.</p>
+  </div>
+
+  <div class="constraint">
+    <span class="tag">Deploy ordering</span>
+    <p>Deploying code before running its migration takes the site down. Every board query names the columns the migrations add, so PHP one migration ahead of the database errors on <em>every</em> request until the SQL is imported. Import first, or accept a window of downtime.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Deliberate omissions</p>
+  <h2>What is not built, and why</h2>
+  <div class="ledger">
+    <div class="row"><dt>No password auth</dt><dd>OAuth only — Google and GitHub. No password to store, leak or reset.</dd></div>
+    <div class="row"><dt>No per-card permissions</dt><dd>The board is the unit of sharing, by design. Everyone on a board can edit everything on it.</dd></div>
+    <div class="row"><dt>No WebSocket</dt><dd>Shared hosting cannot hold one open. See the sync spine.</dd></div>
+    <div class="row"><dt>No CRDT or OT</dt><dd>Optimistic versioning with a visible conflict instead. Real merge semantics are a different project and would need to be their own decision.</dd></div>
+    <div class="row"><dt>No board restore UI</dt><dd>A deleted board is recoverable for 30 days by clearing <code>deleted_at</code> by hand, then hard-deleted by <code>cleanup.php</code>. Cascades take the cards, calendar, members and history with it.</dd></div>
+    <div class="row"><dt>Timezone conversion on calendar dates</dt><dd>Deliberately absent. <code>event_date</code> is a <code>DATE</code> and <code>start_time</code> a <code>TIME</code>, neither carrying a zone — the one place in the app that is not UTC over the wire. A shared calendar wants "14 March, 3pm" to read the same for everyone; converting per viewer would have two people on one board disagreeing about which day something falls on.</dd></div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">Honest status</p>
+  <h2>What has actually run</h2>
+  <div class="col">
+    <p>The PHP is <code>php -l</code> clean and has been exercised against a real MariaDB: board load, the note shape, the 409 conflict path, the reminder sweep and the push feed. The client is driven end to end against a mock API that stubs the whole backend in memory, so the frontend runs from disk with no PHP, no MySQL and no OAuth.</p>
+    <p>What has <em>not</em> run: real push delivery through Google's and Apple's services, which needs an HTTPS origin and a physical phone; the reminder cron on an actual schedule; OAuth against a production domain; GD photo uploads on the host's PHP; and two people editing the same card at the same time. Each is blocked on the same thing — a live deployment with working sign-in — and none can be simulated from a development machine.</p>
+  </div>
+</section>
+
+<p class="foot">
+  Co notes &middot; PHP 8.1+ and MySQL, zero dependencies, no build step<br>
+  Figures and figures-in-prose drawn from the source at shell version 20.<br>
+  Deeper rationale, including the failure modes behind each decision, lives in <code>CLAUDE.md</code> at the repository root.
+</p>
+
+</div>
+
+</body>
+</html>
