@@ -726,6 +726,24 @@ Hard-won during the build; not obvious from reading the code.
   were deleted, along with `contributorIds` in `mock-api.js`. Putting the stack
   back means writing that query again - the shape is in git, and the schema
   note above says where to derive it from.
+- **The type is the system font, and the weight ramp is deliberately light.**
+  `--font` leads with `-apple-system`/`BlinkMacSystemFont`/SF Pro, so on an
+  iPhone the app is drawn in the real iOS system face - it always was. The
+  Inter webfont that used to sit in that stack was therefore never used on
+  Apple hardware and only cost a render-blocking request; it is gone, and
+  Windows and Android now get Segoe UI and Roboto through `system-ui`.
+  What actually read as "too bold" was the *weights*, not the family: the
+  stylesheet defaulted to 600 for body copy with 700/750/800 above it. Apple
+  puts body at regular and reserves bold for large titles, so the whole ramp
+  moved one step down in a single pass - 800 to 700, 750 and 700 to 600, 650
+  and 600 to 500, 500 to 400 - which keeps every relative contrast and lands
+  the base at 400. Do it in one pass if you ever redo it; a sequential
+  find-and-replace turns 600 into 500 into 400 and flattens the hierarchy.
+  `-webkit-font-smoothing:antialiased` is part of this, not decoration: SF is
+  drawn for antialiased rendering and gains apparent weight without it.
+  The editor pair stays at 400 and the mirror still fakes bold with
+  `-webkit-text-stroke`, so none of this touches caret alignment - verified by
+  `eContent.scrollHeight === eMirror.scrollHeight` on wrapped text.
 - **The editor mirror may not change any glyph's advance width.** `#e-mirror`
   paints the text that `#e-content` holds, and the caret comes from the
   textarea - so if the mirror lays a character out even slightly wider, the
@@ -734,10 +752,17 @@ Hard-won during the build; not obvious from reading the code.
   hidden (their width still has to be there), weight is faked with
   `-webkit-text-stroke` rather than a heavier face, and a heading is *not*
   enlarged. Measured on this stack: a real `font-weight:750` is **+17.9px**
-  across one line of prose, a stroke and an italic are **0**. Italic is only
-  free because the webfont loads without an italic axis so browsers shear it;
-  a stack resolving to a real italic face would not be, so `italicIsMetricSafe()`
-  measures it once at runtime and only then adds `.italic-ok`. Anything new in
+  across one line of prose, a stroke and an italic are **0**. Italic is free
+  only when the resolved face has no italic of its own and the browser shears
+  the upright instead; a real italic face is not, so `italicIsMetricSafe()`
+  measures it once at runtime and only then adds `.italic-ok`. Measured: Inter
+  drifts **0px**, the system stack **4.2px**. So the mirror slants italic on a
+  machine that falls back to a sheared face and silently does not on one with a
+  real italic - **including every Apple device**, where `-apple-system` has
+  always won and SF Pro has always had a true italic. That is not a regression
+  from dropping Inter, it was already the case on the platform this app is
+  mostly used on. The *rendered* view italicises everywhere regardless; it has
+  no caret to stay under. Anything new in
   the mirror has to be checked the same way - the cheap test is that
   `eContent.scrollHeight === eMirror.scrollHeight` on wrapped text.
 - **`Push::pending()` moves a watermark, so reading it twice is not the same

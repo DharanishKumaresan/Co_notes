@@ -24,8 +24,8 @@
  * `php tools/doctor.php` fails if these drift apart.
  */
 
-const VERSION = '19';
-const CACHE = 'conotes-shell-v19';
+const VERSION = '20';
+const CACHE = 'conotes-shell-v20';
 
 const SHELL = [
   '/',
